@@ -1,0 +1,39 @@
+{
+  "compilerOptions": {
+    "target": "ES2020",
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "lib": ["ES2020", "DOM", "DOM.Iterable"],
+    "strict": true,
+    "baseUrl": ".",
+    "paths": {
+      "@liteforge/core": ["./packages/core/src/index.ts"],
+      "@liteforge/core/*": ["./packages/core/src/*"],
+      "@liteforge/runtime": ["./packages/runtime/src/index.ts"],
+      "@liteforge/runtime/*": ["./packages/runtime/src/*"],
+      "@liteforge/store": ["./packages/store/src/index.ts"],
+      "@liteforge/store/*": ["./packages/store/src/*"],
+      "@liteforge/router": ["./packages/router/src/index.ts"],
+      "@liteforge/router/*": ["./packages/router/src/*"],
+      "@liteforge/vite-plugin": ["./packages/vite-plugin/src/index.ts"],
+      "@liteforge/vite-plugin/*": ["./packages/vite-plugin/src/*"],
+      "@liteforge/devtools": ["./packages/devtools/src/index.ts"],
+      "@liteforge/devtools/*": ["./packages/devtools/src/*"]
+    },
+    "noUncheckedIndexedAccess": true,
+    "noEmit": false,
+    "declaration": true,
+    "declarationMap": true,
+    "sourceMap": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "verbatimModuleSyntax": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noFallthroughCasesInSwitch": true,
+    "exactOptionalPropertyTypes": true
+  }
+}

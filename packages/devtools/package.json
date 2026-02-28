@@ -1,0 +1,47 @@
+{
+  "name": "@liteforge/devtools",
+  "version": "0.0.1",
+  "description": "LiteForge DevTools panel for debugging signals, stores, router, and components",
+  "type": "module",
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "sideEffects": false,
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "dev": "tsc -p tsconfig.build.json --watch",
+    "typecheck": "tsc --noEmit",
+    "clean": "rm -rf dist *.tsbuildinfo"
+  },
+  "peerDependencies": {
+    "@liteforge/core": "workspace:*",
+    "@liteforge/store": "workspace:*"
+  },
+  "devDependencies": {
+    "@liteforge/core": "workspace:*",
+    "@liteforge/store": "workspace:*"
+  },
+  "keywords": [
+    "liteforge",
+    "devtools",
+    "debugging",
+    "signals",
+    "stores"
+  ],
+  "author": "",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/liteforge/liteforge.git",
+    "directory": "packages/devtools"
+  }
+}

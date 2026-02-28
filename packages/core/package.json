@@ -1,0 +1,39 @@
+{
+  "name": "@liteforge/core",
+  "version": "0.0.1",
+  "description": "LiteForge reactive primitives: signal, computed, effect, batch",
+  "type": "module",
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "sideEffects": false,
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "dev": "tsc -p tsconfig.build.json --watch",
+    "typecheck": "tsc --noEmit",
+    "clean": "rm -rf dist *.tsbuildinfo"
+  },
+  "keywords": [
+    "liteforge",
+    "signals",
+    "reactive",
+    "fine-grained",
+    "reactivity"
+  ],
+  "author": "",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/liteforge/liteforge.git",
+    "directory": "packages/core"
+  }
+}

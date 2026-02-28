@@ -1,0 +1,396 @@
+/**
+ * LiteForge Custom Babel JSX Visitor
+ * 
+ * Transforms JSX elements into h() function calls with proper getter wrapping
+ * for signal-based reactivity.
+ * 
+ * Transform examples:
+ *   <div class="foo">Hello</div>
+ *   → h('div', { class: 'foo' }, 'Hello')
+ * 
+ *   <div class={theme()}>Count: {count()}</div>
+ *   → h('div', { class: () => theme() }, () => `Count: ${count()}`)
+ * 
+ *   <UserCard name={user().name} />
+ *   → h(UserCard, { name: () => user().name })
+ */
+
+import type { Visitor, NodePath } from '@babel/traverse';
+import * as t from '@babel/types';
+import type { JsxTransformState } from './types.js';
+import { shouldWrapExpression, wrapInGetter } from './getter-wrap.js';
+import { isEventHandler, isComponent } from './utils.js';
+
+// =============================================================================
+// Visitor Factory
+// =============================================================================
+
+/**
+ * Create the JSX visitor with the given transform state
+ */
+export function createJsxVisitor(state: JsxTransformState): Visitor {
+  return {
+    JSXElement(path: NodePath<t.JSXElement>) {
+      state.hasJsx = true;
+      const hCall = transformJsxElement(path.node);
+      path.replaceWith(hCall);
+    },
+
+    JSXFragment(path: NodePath<t.JSXFragment>) {
+      state.hasJsx = true;
+      state.hasFragment = true;
+      const hCall = transformJsxFragment(path.node);
+      path.replaceWith(hCall);
+    },
+  };
+}
+
+// =============================================================================
+// JSX Element Transform
+// =============================================================================
+
+/**
+ * Transform a JSX element into an h() call
+ */
+export function transformJsxElement(element: t.JSXElement): t.CallExpression {
+  const tag = getTagExpression(element.openingElement);
+  const props = transformAttributes(element.openingElement.attributes);
+  const children = transformChildren(element.children);
+
+  return createHCall(tag, props, children);
+}
+
+/**
+ * Transform a JSX fragment into an h(Fragment, null, ...) call
+ */
+export function transformJsxFragment(fragment: t.JSXFragment): t.CallExpression {
+  const children = transformChildren(fragment.children);
+  return createHCall(t.identifier('Fragment'), null, children);
+}
+
+// =============================================================================
+// Tag Expression
+// =============================================================================
+
+/**
+ * Get the tag expression for an opening element.
+ * - HTML elements (lowercase): string literal
+ * - Components (PascalCase): identifier reference
+ * - Namespaced (foo:bar): not supported, throw error
+ * - Member expression (Foo.Bar): pass through
+ */
+export function getTagExpression(
+  openingElement: t.JSXOpeningElement
+): t.StringLiteral | t.Identifier | t.MemberExpression {
+  const name = openingElement.name;
+
+  if (t.isJSXIdentifier(name)) {
+    // Check if it's a component (PascalCase) or HTML element (lowercase)
+    if (isComponent(name.name)) {
+      return t.identifier(name.name);
+    }
+    return t.stringLiteral(name.name);
+  }
+
+  if (t.isJSXMemberExpression(name)) {
+    return jsxMemberToMemberExpression(name);
+  }
+
+  if (t.isJSXNamespacedName(name)) {
+    throw new Error(
+      `JSX namespaced names (${name.namespace.name}:${name.name.name}) are not supported`
+    );
+  }
+
+  // Should not reach here
+  throw new Error('Unknown JSX element name type');
+}
+
+/**
+ * Convert JSXMemberExpression to regular MemberExpression
+ * e.g., Foo.Bar.Baz → Foo.Bar.Baz
+ */
+function jsxMemberToMemberExpression(
+  jsxMember: t.JSXMemberExpression
+): t.MemberExpression {
+  const property = t.identifier(jsxMember.property.name);
+  
+  if (t.isJSXIdentifier(jsxMember.object)) {
+    return t.memberExpression(t.identifier(jsxMember.object.name), property);
+  }
+  
+  // Nested: recursively convert
+  return t.memberExpression(
+    jsxMemberToMemberExpression(jsxMember.object),
+    property
+  );
+}
+
+// =============================================================================
+// Attributes Transform
+// =============================================================================
+
+/**
+ * Transform JSX attributes into an object expression or null
+ */
+export function transformAttributes(
+  attributes: Array<t.JSXAttribute | t.JSXSpreadAttribute>
+): t.ObjectExpression | null {
+  if (attributes.length === 0) {
+    return null;
+  }
+
+  const properties: Array<t.ObjectProperty | t.SpreadElement> = [];
+
+  for (const attr of attributes) {
+    if (t.isJSXSpreadAttribute(attr)) {
+      // {...attrs} → ...attrs
+      properties.push(t.spreadElement(attr.argument));
+    } else {
+      // name={value} or name="value" or name (boolean shorthand)
+      const prop = transformAttribute(attr);
+      if (prop !== null) {
+        properties.push(prop);
+      }
+    }
+  }
+
+  if (properties.length === 0) {
+    return null;
+  }
+
+  return t.objectExpression(properties);
+}
+
+/**
+ * Transform a single JSX attribute into an object property
+ */
+export function transformAttribute(attr: t.JSXAttribute): t.ObjectProperty | null {
+  const name = getAttributeName(attr.name);
+  const value = attr.value;
+
+  // Boolean shorthand: <div disabled /> → { disabled: true }
+  if (value === null) {
+    return t.objectProperty(
+      t.stringLiteral(name),
+      t.booleanLiteral(true)
+    );
+  }
+
+  // String literal: <div class="foo" /> → { class: 'foo' }
+  if (t.isStringLiteral(value)) {
+    return t.objectProperty(
+      t.stringLiteral(name),
+      value
+    );
+  }
+
+  // Expression: <div class={expr} /> → { class: maybeWrap(expr) }
+  if (t.isJSXExpressionContainer(value)) {
+    const expr = value.expression;
+
+    // Empty expression: <div data={} /> - skip
+    if (t.isJSXEmptyExpression(expr)) {
+      return null;
+    }
+
+    const processedValue = processAttributeValue(name, expr);
+    return t.objectProperty(
+      t.stringLiteral(name),
+      processedValue
+    );
+  }
+
+  // JSX element as attribute value (rare but valid)
+  if (t.isJSXElement(value)) {
+    const hCall = transformJsxElement(value);
+    // Wrap JSX element in getter since it could contain reactive content
+    return t.objectProperty(
+      t.stringLiteral(name),
+      wrapInGetter(hCall)
+    );
+  }
+
+  // JSX fragment as attribute value
+  if (t.isJSXFragment(value)) {
+    const hCall = transformJsxFragment(value);
+    return t.objectProperty(
+      t.stringLiteral(name),
+      wrapInGetter(hCall)
+    );
+  }
+
+  return null;
+}
+
+/**
+ * Get the string name of a JSX attribute
+ */
+function getAttributeName(name: t.JSXIdentifier | t.JSXNamespacedName): string {
+  if (t.isJSXIdentifier(name)) {
+    return name.name;
+  }
+  // Namespaced: xmlns:xlink → xmlns:xlink
+  return `${name.namespace.name}:${name.name.name}`;
+}
+
+/**
+ * Process an attribute value expression.
+ * - Event handlers (onX): never wrap
+ * - Static values: don't wrap
+ * - Dynamic expressions: wrap in getter
+ */
+export function processAttributeValue(
+  propName: string,
+  expr: t.Expression
+): t.Expression {
+  // Event handlers are never wrapped
+  if (isEventHandler(propName)) {
+    return expr;
+  }
+
+  // Check if wrapping is needed
+  if (shouldWrapExpression(expr)) {
+    return wrapInGetter(expr);
+  }
+
+  return expr;
+}
+
+// =============================================================================
+// Children Transform
+// =============================================================================
+
+/**
+ * Transform JSX children into an array of h() call arguments
+ */
+export function transformChildren(
+  children: t.JSXElement['children']
+): t.Expression[] {
+  const result: t.Expression[] = [];
+
+  for (const child of children) {
+    const transformed = transformChild(child);
+    if (transformed !== null) {
+      result.push(transformed);
+    }
+  }
+
+  return result;
+}
+
+/**
+ * Transform a single JSX child
+ */
+export function transformChild(
+  child: t.JSXElement['children'][number]
+): t.Expression | null {
+  // Text content
+  if (t.isJSXText(child)) {
+    const text = cleanJsxText(child.value);
+    if (text === '') {
+      return null;
+    }
+    return t.stringLiteral(text);
+  }
+
+  // Expression container: {expr}
+  if (t.isJSXExpressionContainer(child)) {
+    const expr = child.expression;
+
+    // Empty expression: {} - skip
+    if (t.isJSXEmptyExpression(expr)) {
+      return null;
+    }
+
+    return processChildExpression(expr);
+  }
+
+  // Nested JSX element
+  if (t.isJSXElement(child)) {
+    return transformJsxElement(child);
+  }
+
+  // JSX fragment
+  if (t.isJSXFragment(child)) {
+    return transformJsxFragment(child);
+  }
+
+  // JSX spread child: {...children} - rare, convert to spread
+  if (t.isJSXSpreadChild(child)) {
+    // This is complex to handle; for now, just return the expression
+    // The runtime h() needs to handle spread children
+    return child.expression;
+  }
+
+  return null;
+}
+
+/**
+ * Process a child expression, wrapping if necessary
+ */
+export function processChildExpression(expr: t.Expression): t.Expression {
+  // Arrow functions that are render props should NOT be additionally wrapped
+  // They're already functions: {(item) => <li>{item}</li>}
+  if (t.isArrowFunctionExpression(expr) || t.isFunctionExpression(expr)) {
+    return expr;
+  }
+
+  // Component calls (uppercase callee) should NOT be wrapped
+  // e.g., Link({...}), Show({...}), RouterOutlet()
+  // These return Nodes and should be called ONCE, not in a reactive effect
+  if (t.isCallExpression(expr)) {
+    const callee = expr.callee;
+    if (t.isIdentifier(callee) && /^[A-Z]/.test(callee.name)) {
+      return expr; // Don't wrap - it's a component that returns a Node
+    }
+  }
+
+  // Static values don't need wrapping
+  if (!shouldWrapExpression(expr)) {
+    return expr;
+  }
+
+  // Dynamic expressions get wrapped
+  return wrapInGetter(expr);
+}
+
+/**
+ * Clean JSX text content:
+ * - Trim leading/trailing whitespace on lines
+ * - Collapse multiple whitespace into single space
+ * - Remove empty lines at start/end
+ */
+export function cleanJsxText(text: string): string {
+  // Split into lines and trim each
+  const lines = text.split('\n').map((line) => line.trim());
+
+  // Filter out all empty lines, then join with space
+  const nonEmpty = lines.filter((line) => line !== '');
+
+  // Join with single space and trim result
+  return nonEmpty.join(' ').trim();
+}
+
+// =============================================================================
+// h() Call Creation
+// =============================================================================
+
+/**
+ * Create an h() call expression
+ */
+export function createHCall(
+  tag: t.Expression,
+  props: t.ObjectExpression | null,
+  children: t.Expression[]
+): t.CallExpression {
+  const args: t.Expression[] = [tag];
+
+  // Props (null if no props)
+  args.push(props ?? t.nullLiteral());
+
+  // Children
+  args.push(...children);
+
+  return t.callExpression(t.identifier('h'), args);
+}
