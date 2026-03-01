@@ -26,24 +26,27 @@ declare global {
 // Types
 // =============================================================================
 
+/**
+ * A mounted component instance tracked for HMR.
+ * Created by createComponent() and registered with the HMR handler.
+ */
 export interface HMRInstance {
-  /** The module ID this instance came from */
+  /** The HMR identifier (format: "/path/to/file.tsx::ComponentName") */
   __hmrId: string;
-  /** The root DOM element */
+  /** The root DOM element of this instance */
   __el: Node;
-  /** Current props */
+  /** Current props passed to this instance */
   __props: Record<string, unknown>;
-  /** Setup result (signals, etc.) */
+  /** Setup result containing signals (PRESERVED during HMR) */
   __setup: Record<string, unknown>;
-  /** Loaded data */
+  /** Loaded data from load() function */
   __data: Record<string, unknown>;
-  /** The render function */
-  __renderFn: (args: {
-    props: Record<string, unknown>;
-    setup: Record<string, unknown>;
-    data: Record<string, unknown>;
-  }) => Node;
-  /** Update handler */
+  /** Cleanup function for mounted effects */
+  __cleanup: (() => void) | undefined;
+  /** 
+   * Update this instance with a new module.
+   * Called by the HMR handler when the source file changes.
+   */
   __hmrUpdate: (newModule: Record<string, unknown>) => void;
 }
 
@@ -98,10 +101,10 @@ export function initHMR(): HMRHandler {
       if (!this.registry.has(moduleUrl)) {
         this.registry.set(moduleUrl, new Set());
       }
-      this.registry.get(moduleUrl)!.add(instance);
-      
-      if (import.meta.env?.DEV) {
-        console.log('[LiteForge HMR] Registered instance for:', moduleUrl);
+      const instances = this.registry.get(moduleUrl);
+      if (instances) {
+        instances.add(instance);
+        console.log(`[LiteForge HMR] 📝 Registered: ${instance.__hmrId} (${instances.size} instance(s))`);
       }
     },
 
@@ -109,6 +112,7 @@ export function initHMR(): HMRHandler {
       const instances = this.registry.get(moduleUrl);
       if (instances) {
         instances.delete(instance);
+        console.log(`[LiteForge HMR] 🗑️ Unregistered: ${instance.__hmrId}`);
         if (instances.size === 0) {
           this.registry.delete(moduleUrl);
         }
@@ -116,7 +120,7 @@ export function initHMR(): HMRHandler {
     },
 
     update(moduleUrl: string, newModule: Record<string, unknown> | null): void {
-      console.log('[LiteForge HMR] Module updated:', moduleUrl);
+      console.log('[LiteForge HMR] 🔄 Module updated:', moduleUrl);
       
       if (!newModule) {
         console.warn('[LiteForge HMR] No new module received, triggering full reload');
@@ -127,24 +131,42 @@ export function initHMR(): HMRHandler {
       const instances = this.registry.get(moduleUrl);
       
       if (instances && instances.size > 0) {
-        console.log('[LiteForge HMR] Updating', instances.size, 'instance(s)');
+        console.log(`[LiteForge HMR] 🔄 Updating ${instances.size} instance(s)`);
         
-        for (const instance of instances) {
-          try {
-            instance.__hmrUpdate(newModule);
-          } catch (err) {
-            console.error('[LiteForge HMR] Error updating instance:', err);
-            // Fall back to full reload on error
-            window.location.reload();
-            return;
+        let successCount = 0;
+        const instancesArray = Array.from(instances);
+        
+        // Use requestAnimationFrame to batch DOM updates
+        requestAnimationFrame(() => {
+          for (const instance of instancesArray) {
+            try {
+              instance.__hmrUpdate(newModule);
+              successCount++;
+            } catch (err) {
+              console.error(`[LiteForge HMR] ❌ Error updating ${instance.__hmrId}:`, err);
+            }
           }
-        }
+          
+          if (successCount > 0) {
+            console.log(`[LiteForge HMR] ✅ ${successCount} component(s) hot-replaced`);
+          } else {
+            // All updates failed - fall back to full reload
+            console.warn('[LiteForge HMR] All updates failed, triggering full reload');
+            window.location.reload();
+          }
+        });
       } else {
-        // No tracked instances for this module
-        // Level 1 HMR: just reload the page
-        // Component-level HMR (Level 2) would need instance registration
-        console.log('[LiteForge HMR] No instances registered, triggering page reload');
-        window.location.reload();
+        // No tracked component instances for this module
+        // This could be a store/route/utility file
+        console.log('[LiteForge HMR] ⚡ No component instances, trying app re-render...');
+        
+        if (this.fullRerender) {
+          this.fullRerender();
+        } else {
+          // Last resort: page reload
+          console.log('[LiteForge HMR] 🔄 Full page reload');
+          window.location.reload();
+        }
       }
     },
 

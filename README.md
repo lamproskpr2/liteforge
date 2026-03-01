@@ -48,25 +48,48 @@ export default defineConfig({
 **main.tsx**
 
 ```tsx
-import { signal } from '@liteforge/core'
-import { createApp, createComponent } from '@liteforge/runtime'
+import { createApp } from '@liteforge/runtime';
+import { devtoolsPlugin } from '@liteforge/devtools';
 
-const Counter = createComponent({
-  setup() {
-    const count = signal(0)
-    return { count }
+// Import app components
+import { App } from './App.js';
+import { createAppRouter } from './router.js';
+import { authStore } from './stores/auth.js';
+import { uiStore } from './stores/ui.js';
+
+const app = await createApp({
+  root: App,
+  target: '#app',
+  router: createAppRouter(),
+  stores: [authStore, uiStore],
+  
+  // DevTools plugin - press Ctrl+Shift+D to open
+  plugins: [
+    devtoolsPlugin({
+      shortcut: 'ctrl+shift+d',  // Keyboard shortcut to toggle panel
+      position: 'right',          // Panel position: 'right' | 'bottom' | 'floating'
+      defaultTab: 'signals',      // Default tab: 'signals' | 'stores' | 'router' | 'components' | 'performance'
+      width: 400,                 // Panel width (for right position)
+      maxEvents: 500,             // Max events to keep in buffer
+    }),
+  ],
+  
+  context: {
+    // Mock API client (in real app, would be actual API client)
+    api: {
+      baseUrl: '/api',
+      get: async (url: string) => {
+        console.log(`[API] GET ${url}`);
+        return {};
+      },
+      post: async (url: string, data: unknown) => {
+        console.log(`[API] POST ${url}`, data);
+        return {};
+      },
+    },
   },
-  component: ({ setup }) => (
-    <div>
-      <p>Count: {() => setup.count()}</p>
-      <button onclick={() => setup.count.update(n => n + 1)}>
-        Increment
-      </button>
-    </div>
-  )
-})
-
-createApp({ root: '#app' }).mount(Counter)
+  debug: true,
+});
 ```
 
 ## Core Concepts

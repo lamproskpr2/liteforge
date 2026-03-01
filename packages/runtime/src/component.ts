@@ -27,6 +27,7 @@ import type {
   Simplify,
 } from './types.js';
 import { use, withContext } from './context.js';
+import { getHMRHandler, type HMRInstance } from './hmr.js';
 
 // Track parent component for debug hierarchy
 let currentParentComponentId: string | undefined;
@@ -96,9 +97,17 @@ export function createComponent<
   };
 
   // Mark as LiteForge component for detection
-  (factory as ComponentFactory<P, Partial<P>>).__liteforge_component = true;
+  const typedFactory = factory as ComponentFactory<P, Partial<P>>;
+  typedFactory.__liteforge_component = true;
+  
+  // Attach HMR metadata for component-level HMR
+  if (definition.__hmrId) {
+    typedFactory.__hmrId = definition.__hmrId;
+    // Cast to unknown first to satisfy exactOptionalPropertyTypes
+    typedFactory.__hmrOptions = definition as ComponentDefinition<P, unknown, unknown>;
+  }
 
-  return factory as ComponentFactory<P, Partial<P>>;
+  return typedFactory;
 }
 
 /**
@@ -132,6 +141,10 @@ function createComponentInstance<
   let mountedCleanup: (() => void) | void;
   const hasProvide = Boolean(definition.provide);
   let provideContext: Record<string, unknown> | undefined;
+  
+  // HMR tracking
+  let hmrInstance: HMRInstance | null = null;
+  let currentDefinition = definition;
 
   // ========================================
   // Phase 1: Setup (synchronous)
@@ -153,8 +166,8 @@ function createComponentInstance<
     beforeNode = before;
 
     // Set up provide context if defined
-    if (hasProvide && definition.provide) {
-      provideContext = definition.provide({ use });
+    if (hasProvide && currentDefinition.provide) {
+      provideContext = currentDefinition.provide({ use });
     }
 
     // Track parent component for nested components
@@ -163,7 +176,7 @@ function createComponentInstance<
 
     // Run within context scope
     const mountWithContext = () => {
-      if (definition.load) {
+      if (currentDefinition.load) {
         // Has async loading - show placeholder first
         state = ComponentState.Loading;
         renderPlaceholder();
@@ -192,9 +205,12 @@ function createComponentInstance<
   function unmount(): void {
     if (state === ComponentState.Unmounted) return;
 
+    // Unregister from HMR before cleanup
+    unregisterFromHMR();
+
     // Run destroyed callback
-    if (definition.destroyed) {
-      definition.destroyed({ props, setup: setupResult as S });
+    if (currentDefinition.destroyed) {
+      currentDefinition.destroyed({ props, setup: setupResult as S });
     }
 
     // Run mounted cleanup
@@ -235,8 +251,8 @@ function createComponentInstance<
 
     let placeholderNode: Node;
 
-    if (definition.placeholder) {
-      placeholderNode = definition.placeholder({ props });
+    if (currentDefinition.placeholder) {
+      placeholderNode = currentDefinition.placeholder({ props });
     } else {
       // Default placeholder is an empty comment node
       placeholderNode = document.createComment('loading');
@@ -250,7 +266,7 @@ function createComponentInstance<
     if (state === ComponentState.Unmounted) return;
 
     const render = () => {
-      const node = definition.component({
+      const node = currentDefinition.component({
         props,
         data: loadedData as D,
         setup: setupResult as S,
@@ -261,8 +277,8 @@ function createComponentInstance<
       state = ComponentState.Mounted;
 
       // Phase 4: mounted callback
-      if (definition.mounted && currentNode instanceof Element) {
-        mountedCleanup = definition.mounted({
+      if (currentDefinition.mounted && currentNode instanceof Element) {
+        mountedCleanup = currentDefinition.mounted({
           el: currentNode,
           props,
           data: loadedData as D,
@@ -270,6 +286,9 @@ function createComponentInstance<
           use,
         });
       }
+      
+      // ── HMR Registration ──
+      registerWithHMR();
     };
 
     if (hasProvide && provideContext) {
@@ -278,6 +297,155 @@ function createComponentInstance<
       render();
     }
   }
+  
+  /**
+   * Register this component instance with the HMR handler.
+   * Called after the component is rendered to the DOM.
+   */
+  function registerWithHMR(): void {
+    const hmrHandler = getHMRHandler();
+    const hmrId = currentDefinition.__hmrId;
+    
+    if (!hmrHandler || !hmrId || !currentNode) return;
+    
+    // Extract module URL from hmrId (format: "/path/to/file.tsx::ComponentName")
+    const moduleUrl = hmrId.split('::')[0];
+    if (!moduleUrl) return;
+    
+    // Create HMR instance
+    hmrInstance = {
+      __hmrId: hmrId,
+      __el: currentNode,
+      __props: props as Record<string, unknown>,
+      __setup: (setupResult ?? {}) as Record<string, unknown>,
+      __data: (loadedData ?? {}) as Record<string, unknown>,
+      __cleanup: typeof mountedCleanup === 'function' ? mountedCleanup : undefined,
+      
+      __hmrUpdate(newModule: Record<string, unknown>): void {
+        // Find the matching component factory in the new module
+        let newDefinition: ComponentDefinition<P, D, S> | null = null;
+        
+        for (const exportValue of Object.values(newModule)) {
+          // Check if it's a component factory with matching __hmrId
+          if (
+            exportValue &&
+            typeof exportValue === 'function' &&
+            '__liteforge_component' in exportValue &&
+            '__hmrId' in exportValue &&
+            (exportValue as ComponentFactory<P>).__hmrId === hmrId
+          ) {
+            const factoryWithOptions = exportValue as ComponentFactory<P>;
+            if (factoryWithOptions.__hmrOptions) {
+              newDefinition = factoryWithOptions.__hmrOptions as ComponentDefinition<P, D, S>;
+              break;
+            }
+          }
+        }
+        
+        if (!newDefinition) {
+          console.warn(`[LiteForge HMR] Could not find updated component for ${hmrId}`);
+          return;
+        }
+        
+        // Clean up old mounted effects
+        if (mountedCleanup) {
+          mountedCleanup();
+          mountedCleanup = undefined;
+        }
+        
+        // Update the current definition
+        currentDefinition = newDefinition;
+        
+        // Re-render with new component function but EXISTING setup/data
+        // This is the key to preserving state!
+        try {
+          const newNode = currentDefinition.component({
+            props,
+            data: loadedData as D,
+            setup: setupResult as S,  // ← Signals keep their values!
+            use,
+          });
+          
+          // Swap DOM nodes
+          const parent = currentNode?.parentNode;
+          if (parent && currentNode) {
+            parent.replaceChild(newNode, currentNode);
+            currentNode = newNode;
+            
+            // Update HMR instance reference
+            this.__el = newNode;
+            
+            // Run new mounted callback
+            if (currentDefinition.mounted && currentNode instanceof Element) {
+              mountedCleanup = currentDefinition.mounted({
+                el: currentNode,
+                props,
+                data: loadedData as D,
+                setup: setupResult as S,
+                use,
+              });
+              this.__cleanup = typeof mountedCleanup === 'function' ? mountedCleanup : undefined;
+            }
+            
+            console.log(`[LiteForge HMR] ✅ Component updated: ${hmrId}`);
+          }
+        } catch (err) {
+          console.error(`[LiteForge HMR] ❌ Render failed for ${hmrId}:`, err);
+          
+          // Fallback: try full remount with new setup
+          try {
+            console.log(`[LiteForge HMR] 🔄 Attempting full remount...`);
+            
+            // Re-run setup with new definition
+            if (currentDefinition.setup) {
+              setupResult = currentDefinition.setup({ props, use });
+            }
+            
+            const newNode = currentDefinition.component({
+              props,
+              data: loadedData as D,
+              setup: setupResult as S,
+              use,
+            });
+            
+            const parent = currentNode?.parentNode;
+            if (parent && currentNode) {
+              parent.replaceChild(newNode, currentNode);
+              currentNode = newNode;
+              this.__el = newNode;
+              this.__setup = (setupResult ?? {}) as Record<string, unknown>;
+              
+              console.log(`[LiteForge HMR] ✅ Full remount succeeded: ${hmrId}`);
+            }
+          } catch (remountErr) {
+            console.error(`[LiteForge HMR] ❌ Full remount also failed:`, remountErr);
+            throw remountErr;  // Let the HMR handler fall back to page reload
+          }
+        }
+      },
+    };
+    
+    // Register with HMR handler
+    hmrHandler.register(moduleUrl, hmrInstance);
+  }
+  
+  /**
+   * Unregister this component instance from the HMR handler.
+   * Called when the component is unmounted.
+   */
+  function unregisterFromHMR(): void {
+    const hmrHandler = getHMRHandler();
+    const hmrId = currentDefinition.__hmrId;
+    
+    if (!hmrHandler || !hmrId || !hmrInstance) return;
+    
+    const moduleUrl = hmrId.split('::')[0];
+    if (moduleUrl) {
+      hmrHandler.unregister(moduleUrl, hmrInstance);
+    }
+    
+    hmrInstance = null;
+  }
 
   function renderError(error: Error): void {
     if (!parentElement) return;
@@ -285,8 +453,8 @@ function createComponentInstance<
 
     state = ComponentState.Error;
 
-    if (definition.error) {
-      const errorNode = definition.error({
+    if (currentDefinition.error) {
+      const errorNode = currentDefinition.error({
         props,
         error,
         retry: () => {
@@ -305,9 +473,9 @@ function createComponentInstance<
   }
 
   function startLoading(): void {
-    if (!definition.load) return;
+    if (!currentDefinition.load) return;
 
-    definition
+    currentDefinition
       .load({
         props,
         setup: setupResult as S,

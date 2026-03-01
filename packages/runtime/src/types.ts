@@ -202,6 +202,13 @@ export interface ComponentDefinition<
   /** Component name for debugging (shown in DevTools) */
   name?: string;
 
+  /** 
+   * HMR identifier - injected by vite-plugin during development.
+   * Format: "/absolute/path/to/file.tsx::ExportName"
+   * @internal
+   */
+  __hmrId?: string;
+
   /** Optional prop definitions with types and defaults */
   props?: PropsSchema<P>;
 
@@ -246,6 +253,14 @@ export interface ComponentFactory<
   (props: InputP): ComponentInstance;
   /** Internal marker for component detection */
   __liteforge_component: true;
+  /** HMR identifier (injected by vite-plugin in dev mode) */
+  __hmrId?: string;
+  /** 
+   * Component definition (for HMR to access updated render function).
+   * Typed as unknown for flexibility - HMR code handles type safety.
+   * @internal
+   */
+  __hmrOptions?: ComponentDefinition<FullP, unknown, unknown>;
 }
 
 /**

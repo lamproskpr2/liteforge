@@ -17,7 +17,7 @@ import type { Plugin } from 'vite';
 import type { LiteForgePluginOptions, ResolvedPluginOptions } from './types.js';
 import { resolveOptions, shouldTransform, isNodeModules } from './utils.js';
 import { transform } from './transform.js';
-import { appendHmrCode, hasHmrAcceptance } from './hmr.js';
+import { appendHmrCode, hasHmrAcceptance, injectHmrIds } from './hmr.js';
 
 // =============================================================================
 // Plugin Factory
@@ -58,10 +58,16 @@ export default function liteforgePlugin(options?: LiteForgePluginOptions): Plugi
         return null;
       }
 
-      // Add HMR code in dev mode
+      // Add HMR support in dev mode
       let finalCode = result.code;
-      if (isDev && resolvedOptions.hmr && !hasHmrAcceptance(finalCode)) {
-        finalCode = appendHmrCode(finalCode, id);
+      if (isDev && resolvedOptions.hmr) {
+        // Inject __hmrId into createComponent() calls for component-level HMR
+        finalCode = injectHmrIds(finalCode, id);
+        
+        // Add HMR boundary code
+        if (!hasHmrAcceptance(finalCode)) {
+          finalCode = appendHmrCode(finalCode, id);
+        }
       }
 
       return {
@@ -86,6 +92,7 @@ export { transform, transformCode } from './transform.js';
 // Export utilities for advanced use
 export { shouldWrapExpression, isStaticExpression, wrapInGetter } from './getter-wrap.js';
 export { isEventHandler, isComponent } from './utils.js';
+export { injectHmrIds, generateHmrCode, appendHmrCode, hasHmrAcceptance } from './hmr.js';
 
 // Export template extraction utilities for advanced use
 export {

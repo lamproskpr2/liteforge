@@ -7,6 +7,7 @@ import {
   generateHmrCode,
   appendHmrCode,
   hasHmrAcceptance,
+  injectHmrIds,
 } from '../src/hmr.js';
 
 // =============================================================================
@@ -99,5 +100,89 @@ describe('hasHmrAcceptance', () => {
       }
     `;
     expect(hasHmrAcceptance(code)).toBe(false);
+  });
+});
+
+// =============================================================================
+// injectHmrIds Tests
+// =============================================================================
+
+describe('injectHmrIds', () => {
+  it('injects __hmrId for named export const', () => {
+    const code = `export const MyComponent = createComponent({
+  name: 'MyComponent',
+  component() { return null; }
+});`;
+    const result = injectHmrIds(code, '/src/MyComponent.tsx');
+    expect(result).toContain('__hmrId: "/src/MyComponent.tsx::MyComponent"');
+  });
+
+  it('injects __hmrId for named export let', () => {
+    const code = `export let MyComponent = createComponent({
+  name: 'MyComponent',
+});`;
+    const result = injectHmrIds(code, '/src/MyComponent.tsx');
+    expect(result).toContain('__hmrId: "/src/MyComponent.tsx::MyComponent"');
+  });
+
+  it('injects __hmrId for local const (non-exported)', () => {
+    const code = `const LocalComponent = createComponent({
+  name: 'Local',
+});`;
+    const result = injectHmrIds(code, '/src/Local.tsx');
+    expect(result).toContain('__hmrId: "/src/Local.tsx::LocalComponent"');
+  });
+
+  it('injects __hmrId for export default', () => {
+    const code = `export default createComponent({
+  name: 'Default',
+});`;
+    const result = injectHmrIds(code, '/src/Default.tsx');
+    expect(result).toContain('__hmrId: "/src/Default.tsx::default"');
+  });
+
+  it('handles multiple components in one file', () => {
+    const code = `
+export const First = createComponent({
+  name: 'First',
+});
+
+export const Second = createComponent({
+  name: 'Second',
+});
+`;
+    const result = injectHmrIds(code, '/src/Components.tsx');
+    expect(result).toContain('__hmrId: "/src/Components.tsx::First"');
+    expect(result).toContain('__hmrId: "/src/Components.tsx::Second"');
+  });
+
+  it('does not modify non-component code', () => {
+    const code = `
+const helper = () => 'hello';
+export const config = { key: 'value' };
+`;
+    const result = injectHmrIds(code, '/src/utils.ts');
+    expect(result).not.toContain('__hmrId');
+    expect(result).toBe(code);
+  });
+
+  it('normalizes Windows paths', () => {
+    const code = `export const MyComp = createComponent({ name: 'MyComp' });`;
+    const result = injectHmrIds(code, 'C:\\Users\\dev\\src\\MyComp.tsx');
+    expect(result).toContain('C:/Users/dev/src/MyComp.tsx::MyComp');
+    expect(result).not.toContain('\\');
+  });
+
+  it('preserves existing component structure', () => {
+    const code = `export const App = createComponent({
+  name: 'App',
+  setup() { return { count: signal(0) }; },
+  component({ setup }) { return <div>{setup.count()}</div>; },
+});`;
+    const result = injectHmrIds(code, '/src/App.tsx');
+    expect(result).toContain('__hmrId: "/src/App.tsx::App"');
+    expect(result).toContain('name: \'App\'');
+    expect(result).toContain('setup()');
+    expect(result).toContain('component({ setup })');
   });
 });

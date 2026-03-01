@@ -362,11 +362,10 @@ If a new DOM event isn't recognized as an event handler and gets wrapped in a ge
 
 ## Known Issues & Gotchas
 
-1. **HMR not working** — Vite plugin needs HMR boundary implementation. Manual browser refresh required.
-2. **Form value binding** — Must use `value={() => field.value()}` not `value={field.value}`. Signal needs explicit getter wrapper in JSX attributes.
-3. **Text spacing in JSX** — Adjacent text nodes and signals need explicit `{' '}` for spaces.
-4. **Calendar drag & drop** uses event delegation on the grid container (not individual event elements) to survive reactive re-renders.
-5. **Store signals** use `.set()` for updates, not direct assignment: `state.value.set(newVal)` not `state.value = newVal`.
+1. **Form value binding** — Must use `value={() => field.value()}` not `value={field.value}`. Signal needs explicit getter wrapper in JSX attributes.
+2. **Text spacing in JSX** — Adjacent text nodes and signals need explicit `{' '}` for spaces.
+3. **Calendar drag & drop** uses event delegation on the grid container (not individual event elements) to survive reactive re-renders.
+4. **Store signals** use `.set()` for updates, not direct assignment: `state.value.set(newVal)` not `state.value = newVal`.
 
 ---
 
@@ -390,4 +389,4 @@ If a new DOM event isn't recognized as an event handler and gets wrapped in a ge
 - [ ] `@liteforge/calendar` — Month view click-to-navigate, multi-day event spanning
 - [ ] Docs site — Built with LiteForge itself
 - [ ] `create-liteforge` — CLI scaffolding tool
-- [ ] HMR fix — Component-level hot module replacement
+- [x] HMR — Component-level hot module replacement with state preservation

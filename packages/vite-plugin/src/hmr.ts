@@ -8,7 +8,69 @@
  * 2. When a module updates, we notify the global __LITEFORGE_HMR__ handler
  * 3. The runtime tracks mounted component instances and can re-render them
  * 4. Signals and stores survive the update (they're in separate modules)
+ * 
+ * Level 2 HMR adds:
+ * - __hmrId injection into createComponent() calls
+ * - Component instance tracking by module URL
+ * - Re-render with preserved setup signals
  */
+
+// =============================================================================
+// __hmrId Injection
+// =============================================================================
+
+/**
+ * Inject __hmrId into all createComponent() calls in a module.
+ * 
+ * This enables component-level HMR by giving each component a unique identifier
+ * based on file path + export name.
+ * 
+ * Patterns handled:
+ * - `export const Sidebar = createComponent({` → adds __hmrId: "/path::Sidebar"
+ * - `export default createComponent({` → adds __hmrId: "/path::default"
+ * - `const Sidebar = createComponent({` → adds __hmrId: "/path::Sidebar"
+ * 
+ * @param code - The source code to transform
+ * @param fileId - The absolute file path (used as module identifier)
+ * @returns Transformed code with __hmrId injected
+ */
+export function injectHmrIds(code: string, fileId: string): string {
+  // Normalize the file path for consistent IDs across platforms
+  const normalizedId = fileId.replace(/\\/g, '/');
+  
+  let result = code;
+  
+  // Pattern 1: Named variable assignment (with or without export)
+  // Matches: `export const Sidebar = createComponent({`
+  // Matches: `const Sidebar = createComponent({`
+  // Matches: `let Sidebar = createComponent({`
+  // Matches: `var Sidebar = createComponent({`
+  result = result.replace(
+    /(?:export\s+)?(?:const|let|var)\s+(\w+)\s*=\s*createComponent\s*\(\s*\{/g,
+    (match, name: string) => {
+      const hmrId = `${normalizedId}::${name}`;
+      return match.replace(
+        'createComponent({',
+        `createComponent({ __hmrId: ${JSON.stringify(hmrId)},`
+      );
+    }
+  );
+  
+  // Pattern 2: Export default createComponent
+  // Matches: `export default createComponent({`
+  result = result.replace(
+    /export\s+default\s+createComponent\s*\(\s*\{/g,
+    (match) => {
+      const hmrId = `${normalizedId}::default`;
+      return match.replace(
+        'createComponent({',
+        `createComponent({ __hmrId: ${JSON.stringify(hmrId)},`
+      );
+    }
+  );
+  
+  return result;
+}
 
 // =============================================================================
 // HMR Code Injection
