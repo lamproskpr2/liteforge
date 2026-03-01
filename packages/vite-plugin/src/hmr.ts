@@ -91,7 +91,7 @@ export function generateHmrCode(moduleId: string): string {
 if (import.meta.hot) {
   import.meta.hot.accept((newModule) => {
     if (typeof window !== 'undefined' && window.__LITEFORGE_HMR__) {
-      window.__LITEFORGE_HMR__.update(${escapedId}, newModule);
+      window.__LITEFORGE_HMR__.handleUpdate(${escapedId}, newModule);
     }
   });
 }

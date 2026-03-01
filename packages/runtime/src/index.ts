@@ -85,4 +85,4 @@ export { _template, _insert, _setProp, _addEventListener } from './template.js';
 
 // HMR support (auto-initializes in development)
 export { initHMR, getHMRHandler } from './hmr.js';
-export type { HMRInstance, HMRHandler } from './hmr.js';
+export type { HMRHandler } from './hmr.js';

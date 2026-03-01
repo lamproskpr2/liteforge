@@ -237,29 +237,49 @@ export async function createApp(config: AppConfig): Promise<AppInstance> {
     const hmrHandler = getHMRHandler();
     if (hmrHandler) {
       // Set up full app re-render for HMR fallback
+      let fullRerenderTimer: ReturnType<typeof setTimeout> | null = null;
+
       hmrHandler.fullRerender = () => {
-        console.log('[LiteForge HMR] Full app re-render');
-        
-        // Unmount current root
-        if (rootInstance) {
-          rootInstance.unmount();
-          rootInstance = null;
-        }
-        if (rootNode && rootNode.parentNode) {
-          rootNode.parentNode.removeChild(rootNode);
-          rootNode = null;
-        }
-        
-        // Re-mount root component
-        if (targetElement) {
-          if (isComponentFactory(config.root)) {
-            rootInstance = (config.root as ComponentFactory<Record<string, unknown>>)({});
-            rootInstance.mount(targetElement);
-          } else {
-            rootNode = (config.root as () => Node)();
-            targetElement.appendChild(rootNode);
+        // Debounce: Vite fires multiple HMR updates in rapid succession when
+        // a module and its importers are all invalidated at once. Without
+        // debouncing we'd re-render multiple times. Collapse all updates
+        // within 50 ms into one.
+        if (fullRerenderTimer !== null) return;
+
+        fullRerenderTimer = setTimeout(() => {
+          fullRerenderTimer = null;
+          console.log('[LiteForge HMR] 🔄 Full app re-render (stores + router preserved)');
+
+          // Preserve scroll position across the re-render
+          const scrollX = window.scrollX;
+          const scrollY = window.scrollY;
+
+          // Unmount current root
+          if (rootInstance) {
+            rootInstance.unmount();
+            rootInstance = null;
           }
-        }
+          if (rootNode && rootNode.parentNode) {
+            rootNode.parentNode.removeChild(rootNode);
+            rootNode = null;
+          }
+
+          // Re-mount root component — all factories read latest definitions
+          // from the component registry (updated by createComponent on re-eval)
+          if (targetElement) {
+            if (isComponentFactory(config.root)) {
+              rootInstance = (config.root as ComponentFactory<Record<string, unknown>>)({});
+              rootInstance.mount(targetElement);
+            } else {
+              rootNode = (config.root as () => Node)();
+              targetElement.appendChild(rootNode);
+            }
+          }
+
+          // Restore scroll after DOM settles
+          requestAnimationFrame(() => { window.scrollTo(scrollX, scrollY); });
+
+        }, 50);
       };
     }
 

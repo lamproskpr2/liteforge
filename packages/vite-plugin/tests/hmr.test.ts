@@ -36,7 +36,7 @@ describe('generateHmrCode', () => {
   it('passes module ID to HMR handler', () => {
     const code = generateHmrCode('/src/components/Button.tsx');
     expect(code).toContain('"/src/components/Button.tsx"');
-    expect(code).toContain('__LITEFORGE_HMR__.update');
+    expect(code).toContain('__LITEFORGE_HMR__.handleUpdate');
   });
 });
 
