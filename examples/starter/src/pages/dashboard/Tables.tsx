@@ -176,7 +176,7 @@ export const TablesPage = createComponent({
 
     return (
       <div class="tables-page">
-        <h1>Users Table</h1>
+        <h1>Users Tabelle (HMR Test)</h1>
         <p class="page-description">
           Data table with sorting, filtering, pagination, and selection.
           Data fetched from JSONPlaceholder API.

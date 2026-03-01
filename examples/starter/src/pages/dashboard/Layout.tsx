@@ -34,7 +34,7 @@ export const DashboardLayout = createComponent({
       <div class={() => `dashboard-layout ${uiStore.sidebarOpen() ? '' : 'sidebar-collapsed'}`}>
         <aside class="sidebar">
           <div class="sidebar-header">
-            <h2>Dashboard</h2>
+            <h2>Dashboard v3</h2>
             <button type="button" class="toggle-btn" onClick={() => uiStore.toggleSidebar()}>
               {() => uiStore.sidebarOpen() ? '<<' : '>>'}
             </button>
