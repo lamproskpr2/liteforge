@@ -102,6 +102,31 @@ export interface ListResponse<T> {
   meta: ListMeta;
 }
 
+/**
+ * Minimal shape of a query result — matches @liteforge/query's QueryResult<T>
+ * without importing it (keeps this file zero-dep).
+ */
+export interface QueryResultShape<T> {
+  data: () => T | undefined;
+  error: () => Error | undefined;
+  isLoading: () => boolean;
+  isStale: () => boolean;
+  isFetched: () => boolean;
+  refetch: () => Promise<void>;
+  dispose: () => void;
+}
+
+/**
+ * Minimal shape of a mutation result — matches @liteforge/query's MutationResult<TData, TVariables>.
+ */
+export interface MutationResultShape<TData, TVariables> {
+  mutate: (variables: TVariables) => Promise<TData>;
+  isLoading: () => boolean;
+  error: () => Error | undefined;
+  data: () => TData | undefined;
+  reset: () => void;
+}
+
 export interface Resource<T, TCreate = Partial<T>, TUpdate = Partial<T>> {
   getList: (params?: ListParams) => Promise<ListResponse<T>>;
   getOne: (id: string | number) => Promise<T>;
@@ -111,6 +136,12 @@ export interface Resource<T, TCreate = Partial<T>, TUpdate = Partial<T>> {
   delete: (id: string | number) => Promise<void>;
   action: (action: string, data?: unknown, id?: string | number) => Promise<unknown>;
   custom: <TResult>(config: Omit<RequestConfig, 'url'> & { path: string }) => Promise<TResult>;
+  // Optional — present only when createClient() receives a query integration
+  useList?: (params?: ListParams | (() => ListParams)) => QueryResultShape<ListResponse<T>>;
+  useOne?: (id: string | number) => QueryResultShape<T>;
+  useCreate?: () => MutationResultShape<T, TCreate>;
+  useUpdate?: () => MutationResultShape<T, { id: string | number; data: TUpdate }>;
+  useDelete?: () => MutationResultShape<void, string | number>;
 }
 
 // ============================================================================

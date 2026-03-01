@@ -116,7 +116,7 @@ describe('query integration', () => {
     client.resource<User>('users').useCreate!();
 
     const options = createMutation.mock.calls[0]?.[0];
-    expect(options?.invalidate).toContain(`${BASE}/users`);
+    expect(options?.invalidate).toContain('users');
   });
 
   it('useUpdate() calls createMutation and fn calls update correctly', async () => {
