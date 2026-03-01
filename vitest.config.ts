@@ -11,6 +11,7 @@ export default defineConfig({
       '@liteforge/vite-plugin': path.resolve(__dirname, 'packages/vite-plugin/src/index.ts'),
       '@liteforge/table': path.resolve(__dirname, 'packages/table/src/index.ts'),
       '@liteforge/calendar': path.resolve(__dirname, 'packages/calendar/src/index.ts'),
+      '@liteforge/modal': path.resolve(__dirname, 'packages/modal/src/index.ts'),
     },
   },
   test: {
@@ -27,6 +28,7 @@ export default defineConfig({
       ['packages/devtools/**', 'happy-dom'],
       ['packages/table/**', 'happy-dom'],
       ['packages/calendar/**', 'happy-dom'],
+      ['packages/modal/**', 'happy-dom'],
     ],
     coverage: {
       provider: 'v8',

@@ -77,6 +77,11 @@ export const DashboardLayout = createComponent({
               children: 'Calendars',
               activeClass: 'active',
             })}
+            {Link({
+              href: '/dashboard/modals',
+              children: 'Modals',
+              activeClass: 'active',
+            })}
             {Show({
               when: () => authStore.isAdmin(),
               children: () => Link({

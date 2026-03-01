@@ -231,6 +231,12 @@ export const routes: RouteDefinition[] = [
         export: 'CalendarPage',
         meta: { title: 'Calendar' },
       },
+      {
+        path: '/modals',
+        component: () => import('./pages/dashboard/Modals.js'),
+        export: 'ModalsPage',
+        meta: { title: 'Modals' },
+      },
     ],
   },
 

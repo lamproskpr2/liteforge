@@ -41,6 +41,9 @@ importers:
       '@liteforge/form':
         specifier: workspace:*
         version: link:../../packages/form
+      '@liteforge/modal':
+        specifier: workspace:*
+        version: link:../../packages/modal
       '@liteforge/query':
         specifier: workspace:*
         version: link:../../packages/query
@@ -95,6 +98,12 @@ importers:
       zod:
         specifier: ^3.24.1
         version: 3.25.76
+
+  packages/modal:
+    devDependencies:
+      '@liteforge/core':
+        specifier: workspace:*
+        version: link:../core
 
   packages/query:
     devDependencies:

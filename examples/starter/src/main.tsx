@@ -12,6 +12,7 @@
 
 import { createApp } from '@liteforge/runtime';
 import { devtoolsPlugin } from '@liteforge/devtools';
+import { ModalProvider } from '@liteforge/modal';
 
 // Import app components
 import { App } from './App.js';
@@ -59,6 +60,9 @@ const app = await createApp({
   },
   debug: true,
 });
+
+// Mount the modal portal (renders all open modals outside the component tree)
+document.body.appendChild(ModalProvider());
 
 // Log helpful info
 console.log('[LiteForge] App mounted. Press Ctrl+Shift+D to open DevTools.');
