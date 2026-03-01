@@ -95,12 +95,20 @@ export function createQuery<T>(options: CreateQueryOptions<T>): QueryResult<T> {
     enabled: options.enabled ?? DEFAULT_OPTIONS.enabled,
   };
 
-  // Internal state signals
-  const dataSignal = signal<T | undefined>(undefined);
+  // Pre-load cache for static keys so signals start with the right values.
+  // This eliminates the flash of undefined/isLoading=true that would otherwise
+  // occur between signal creation and initialize() running.
+  const staticKey = typeof key === 'string' ? key : null;
+  const preloadEntry = staticKey ? queryCache.getEntry<T>(staticKey) : null;
+  const preloadData = preloadEntry?.data;
+  const preloadFetchedAt = preloadEntry?.fetchedAt ?? 0;
+
+  // Internal state signals — initialized from cache when available
+  const dataSignal = signal<T | undefined>(preloadData);
   const errorSignal = signal<Error | undefined>(undefined);
   const isLoadingSignal = signal(false);
-  const isFetchedSignal = signal(false);
-  const fetchedAtSignal = signal(0);
+  const isFetchedSignal = signal(preloadData !== undefined);
+  const fetchedAtSignal = signal(preloadFetchedAt);
 
   // Track if query is disposed
   let isDisposed = false;
@@ -123,8 +131,10 @@ export function createQuery<T>(options: CreateQueryOptions<T>): QueryResult<T> {
 
   /**
    * Execute the fetch with retry logic.
+   * @param serializedKey - The key to fetch for
+   * @param background - If true, don't set isLoading=true (silent revalidation when stale data exists)
    */
-  async function executeFetch(serializedKey: string): Promise<void> {
+  async function executeFetch(serializedKey: string, background = false): Promise<void> {
     if (isDisposed) return;
 
     // Check if enabled
@@ -138,7 +148,9 @@ export function createQuery<T>(options: CreateQueryOptions<T>): QueryResult<T> {
     }
     abortController = new AbortController();
 
-    isLoadingSignal.set(true);
+    if (!background) {
+      isLoadingSignal.set(true);
+    }
     errorSignal.set(undefined);
 
     let lastError: Error | undefined;
@@ -214,10 +226,12 @@ export function createQuery<T>(options: CreateQueryOptions<T>): QueryResult<T> {
    */
   function onFocus(): void {
     if (isDisposed || !opts.refetchOnFocus) return;
-    
+
     // Only refetch if data is stale
     if (isStale()) {
-      refetch().catch(() => {
+      // If we already have data, revalidate silently in the background
+      const hasData = dataSignal() !== undefined;
+      executeFetch(serializeCurrentKey(), hasData).catch(() => {
         // Silently ignore focus refetch errors
       });
     }
@@ -237,22 +251,25 @@ export function createQuery<T>(options: CreateQueryOptions<T>): QueryResult<T> {
 
     // Check for cached data
     const cachedEntry = queryCache.getEntry<T>(serializedKey);
-    if (cachedEntry && cachedEntry.data !== undefined) {
+    const hasCachedData = cachedEntry && cachedEntry.data !== undefined;
+
+    if (hasCachedData) {
       dataSignal.set(cachedEntry.data);
       fetchedAtSignal.set(cachedEntry.fetchedAt);
       isFetchedSignal.set(true);
 
-      // If not stale, don't fetch
-      if (cachedEntry.fetchedAt > 0 && 
-          opts.staleTime > 0 && 
+      // If not stale, don't fetch at all
+      if (cachedEntry.fetchedAt > 0 &&
+          opts.staleTime > 0 &&
           Date.now() - cachedEntry.fetchedAt <= opts.staleTime) {
         return;
       }
     }
 
-    // Initial fetch (if enabled)
+    // Initial fetch (if enabled). When we already have cached data, revalidate
+    // silently in the background so the UI doesn't flash a loading state.
     if (opts.enabled()) {
-      executeFetch(serializedKey).catch(() => {
+      executeFetch(serializedKey, hasCachedData).catch(() => {
         // Error already handled in executeFetch
       });
     }

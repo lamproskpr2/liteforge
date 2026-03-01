@@ -10,16 +10,35 @@ import type { CacheEntry, QueryCacheInterface } from './types.js';
 // Cache Implementation
 // ============================================================================
 
+// ============================================================================
+// Persistent storage (survives module re-evaluation during HMR)
+// ============================================================================
+
+declare global {
+  interface Window {
+    __LITEFORGE_QUERY_CACHE__?: Map<string, CacheEntry>;
+    __LITEFORGE_QUERY_REGISTRY__?: Map<string, Set<() => Promise<void>>>;
+  }
+}
+
 /**
- * Internal cache storage.
+ * Internal cache storage — kept on window so it survives HMR module re-evaluation.
+ * In non-browser environments (SSR, tests) falls back to a plain module-scope Map.
  */
-const cacheMap = new Map<string, CacheEntry>();
+function getOrCreateMap<K, V>(key: string): Map<K, V> {
+  if (typeof window === 'undefined') return new Map<K, V>();
+  const w = window as unknown as Record<string, unknown>;
+  if (!w[key]) w[key] = new Map<K, V>();
+  return w[key] as Map<K, V>;
+}
+
+const cacheMap: Map<string, CacheEntry> = getOrCreateMap('__LITEFORGE_QUERY_CACHE__');
 
 /**
  * Registered queries for invalidation callbacks.
  * Maps cache key to a Set of refetch functions.
  */
-const queryRegistry = new Map<string, Set<() => Promise<void>>>();
+const queryRegistry: Map<string, Set<() => Promise<void>>> = getOrCreateMap('__LITEFORGE_QUERY_REGISTRY__');
 
 /**
  * Create the query cache singleton.

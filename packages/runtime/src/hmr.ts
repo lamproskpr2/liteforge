@@ -32,6 +32,8 @@ export interface HMRHandler {
 declare global {
   interface Window {
     __LITEFORGE_HMR__?: HMRHandler;
+    __LITEFORGE_HMR_TIMER__?: ReturnType<typeof setTimeout>;
+    __LITEFORGE_HMR_COOLDOWN__?: ReturnType<typeof setTimeout>;
   }
   interface ImportMeta {
     env?: {
@@ -44,6 +46,7 @@ declare global {
 
 /** Registry: hmrId → latest ComponentDefinition. Updated on every module re-evaluation. */
 const componentRegistry = new Map<string, ComponentDefinition<Record<string, unknown>, unknown, unknown>>();
+
 
 // =============================================================================
 // Registry API
@@ -100,13 +103,25 @@ function handleHMRUpdate(moduleUrl: string, newModule: Record<string, unknown> |
     console.log(`[LiteForge HMR] ⚡ Non-component module updated: ${moduleUrl}`);
   }
 
-  const handler = window.__LITEFORGE_HMR__;
-  if (handler?.fullRerender) {
-    console.log('[LiteForge HMR] 🔄 Triggering full app re-render (stores + router preserved)...');
-    handler.fullRerender();
-  } else {
-    console.warn('[LiteForge HMR] ⚠️ No fullRerender registered, skipping update');
+  // Guard on window so state survives module re-evaluation.
+  // Vite sends hot-update twice for the same file when it is accepted both
+  // directly (self-accepting boundary) and by a parent module that also has
+  // an HMR boundary. Block all updates while a rerender is already queued or
+  // is in its post-render cooldown period.
+  if (window.__LITEFORGE_HMR_TIMER__ !== undefined || window.__LITEFORGE_HMR_COOLDOWN__ !== undefined) {
+    return;
   }
+
+  window.__LITEFORGE_HMR_TIMER__ = setTimeout(() => {
+    delete window.__LITEFORGE_HMR_TIMER__;
+    const handler = window.__LITEFORGE_HMR__;
+    if (handler?.fullRerender) {
+      console.log('[LiteForge HMR] 🔄 Triggering full app re-render (stores + router preserved)...');
+      handler.fullRerender();
+    } else {
+      console.warn('[LiteForge HMR] ⚠️ No fullRerender registered, skipping update');
+    }
+  }, 50);
 }
 
 // =============================================================================
