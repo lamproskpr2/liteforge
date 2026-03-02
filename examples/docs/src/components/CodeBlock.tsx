@@ -1,13 +1,14 @@
+import { createComponent } from '@liteforge/runtime';
 import { signal } from '@liteforge/core';
-import { effect } from '@liteforge/core';
 
-export interface CodeBlockOptions {
+interface CodeBlockProps {
   code: string;
   language?: string;
   title?: string;
 }
 
-// Token types for basic syntax highlighting
+// ─── Syntax highlighting ───────────────────────────────────────────────────────
+
 type TokenType = 'keyword' | 'string' | 'comment' | 'number' | 'fn' | 'type' | 'plain';
 
 interface Token {
@@ -31,7 +32,6 @@ function tokenize(code: string): Token[] {
   while (i < code.length) {
     const ch = code[i] ?? '';
 
-    // Line comment
     if (ch === '/' && code[i + 1] === '/') {
       const end = code.indexOf('\n', i);
       const value = end === -1 ? code.slice(i) : code.slice(i, end);
@@ -40,7 +40,6 @@ function tokenize(code: string): Token[] {
       continue;
     }
 
-    // Block comment
     if (ch === '/' && code[i + 1] === '*') {
       const end = code.indexOf('*/', i + 2);
       const value = end === -1 ? code.slice(i) : code.slice(i, end + 2);
@@ -49,7 +48,6 @@ function tokenize(code: string): Token[] {
       continue;
     }
 
-    // String (single, double, backtick)
     if (ch === '"' || ch === "'" || ch === '`') {
       const quote = ch;
       let j = i + 1;
@@ -63,7 +61,6 @@ function tokenize(code: string): Token[] {
       continue;
     }
 
-    // Number
     if (/[0-9]/.test(ch) && (i === 0 || !/[a-zA-Z_$]/.test(code[i - 1] ?? ''))) {
       let j = i;
       while (j < code.length && /[0-9._]/.test(code[j] ?? '')) j++;
@@ -72,13 +69,11 @@ function tokenize(code: string): Token[] {
       continue;
     }
 
-    // Identifier or keyword
     if (/[a-zA-Z_$]/.test(ch)) {
       let j = i;
       while (j < code.length && /[a-zA-Z0-9_$]/.test(code[j] ?? '')) j++;
       const word = code.slice(i, j);
       const after = code.slice(j).trimStart();
-
       if (after[0] === '(' && !KEYWORDS.has(word)) {
         tokens.push({ type: 'fn', value: word });
       } else if (KEYWORDS.has(word)) {
@@ -120,43 +115,42 @@ function renderHighlighted(code: string): Node {
   return frag;
 }
 
-export function CodeBlock(opts: CodeBlockOptions): Node {
-  const copied = signal(false);
+// ─── Component ────────────────────────────────────────────────────────────────
 
-  function copy() {
-    navigator.clipboard.writeText(opts.code).then(() => {
-      copied.set(true);
-      setTimeout(() => copied.set(false), 1800);
-    }).catch(() => undefined);
-  }
+export const CodeBlock = createComponent<CodeBlockProps>({
+  name: 'CodeBlock',
+  component({ props }) {
+    const copied = signal(false);
 
-  const wrap = document.createElement('div');
-  wrap.className = 'relative rounded-lg overflow-hidden border border-neutral-800 bg-neutral-900 my-4';
+    function copy() {
+      navigator.clipboard.writeText(props.code).then(() => {
+        copied.set(true);
+        setTimeout(() => copied.set(false), 1800);
+      }).catch(() => undefined);
+    }
 
-  const header = document.createElement('div');
-  header.className = 'flex items-center justify-between px-4 py-2 border-b border-neutral-800 bg-neutral-900';
+    // Tokenizer returns a raw DocumentFragment — not JSX, inserted as a child
+    const codeEl = document.createElement('code');
+    codeEl.appendChild(renderHighlighted(props.code));
 
-  const lang = document.createElement('span');
-  lang.className = 'text-xs text-neutral-500 font-mono';
-  lang.textContent = opts.title ?? (opts.language ?? 'typescript');
-
-  const copyBtn = document.createElement('button');
-  copyBtn.type = 'button';
-  copyBtn.className = 'text-xs text-neutral-500 hover:text-neutral-200 transition-colors select-none';
-  effect(() => { copyBtn.textContent = copied() ? '✓ Copied' : 'Copy'; });
-  copyBtn.addEventListener('click', copy);
-
-  header.appendChild(lang);
-  header.appendChild(copyBtn);
-
-  const pre = document.createElement('pre');
-  pre.className = 'overflow-x-auto p-4 text-sm leading-relaxed font-mono';
-
-  const code = document.createElement('code');
-  code.appendChild(renderHighlighted(opts.code));
-  pre.appendChild(code);
-
-  wrap.appendChild(header);
-  wrap.appendChild(pre);
-  return wrap;
-}
+    return (
+      <div class="relative rounded-lg overflow-hidden border border-neutral-800 bg-neutral-900 my-4">
+        <div class="flex items-center justify-between px-4 py-2 border-b border-neutral-800 bg-neutral-900">
+          <span class="text-xs text-neutral-500 font-mono">
+            {props.title ?? (props.language ?? 'typescript')}
+          </span>
+          <button
+            type="button"
+            onclick={copy}
+            class="text-xs text-neutral-500 hover:text-neutral-200 transition-colors select-none"
+          >
+            {() => copied() ? '✓ Copied' : 'Copy'}
+          </button>
+        </div>
+        <pre class="overflow-x-auto p-4 text-sm leading-relaxed font-mono">
+          {codeEl}
+        </pre>
+      </div>
+    );
+  },
+});

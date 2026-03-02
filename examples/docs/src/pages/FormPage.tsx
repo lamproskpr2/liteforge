@@ -204,59 +204,63 @@ export const FormPage = createComponent({
             Signal-based form state with Zod validation. Field-level error tracking,
             array fields, submission state — all as reactive signals.
           </p>
-          {CodeBlock({ code: `pnpm add @liteforge/form zod`, language: 'bash' })}
-          {CodeBlock({ code: `import { createForm } from '@liteforge/form';\nimport { z } from 'zod';`, language: 'typescript' })}
+          <CodeBlock code={`pnpm add @liteforge/form zod`} language="bash" />
+          <CodeBlock code={`import { createForm } from '@liteforge/form';\nimport { z } from 'zod';`} language="typescript" />
         </div>
 
-        {DocSection({
-          title: 'createForm()',
-          id: 'create-form',
-          description: 'Define schema, initial values, and submission handler. Returns a form instance with reactive field signals.',
-          children: (
-            <div>
-              {CodeBlock({ code: SETUP_CODE, language: 'typescript' })}
-              {ApiTable({ rows: FORM_API })}
-            </div>
-          ),
-        })}
+        <DocSection
+          title="createForm()"
+          id="create-form"
+          description="Define schema, initial values, and submission handler. Returns a form instance with reactive field signals."
+        >
+          <div>
+            <CodeBlock code={SETUP_CODE} language="typescript" />
+            <ApiTable rows={FORM_API} />
+          </div>
+        </DocSection>
 
-        {DocSection({
-          title: 'Field binding',
-          id: 'fields',
-          description: 'form.field(name) returns reactive signals for value, error, touched, and dirty state.',
-          children: CodeBlock({ code: FIELD_CODE, language: 'tsx' }),
-        })}
+        <DocSection
+          title="Field binding"
+          id="fields"
+          description="form.field(name) returns reactive signals for value, error, touched, and dirty state."
+        >
+          <CodeBlock code={FIELD_CODE} language="tsx" />
+        </DocSection>
 
-        {DocSection({
-          title: 'Zod schema validation',
-          id: 'validation',
-          description: 'Use the full Zod API for validation rules. Error messages are reactive — update automatically as the user types.',
-          children: CodeBlock({ code: ZOD_CODE, language: 'typescript' }),
-        })}
+        <DocSection
+          title="Zod schema validation"
+          id="validation"
+          description="Use the full Zod API for validation rules. Error messages are reactive — update automatically as the user types."
+        >
+          <CodeBlock code={ZOD_CODE} language="typescript" />
+        </DocSection>
 
-        {DocSection({
-          title: 'Array fields',
-          id: 'arrays',
-          description: 'Dynamic lists (medications, addresses, contacts) with append/remove and per-item field access.',
-          children: CodeBlock({ code: ARRAY_CODE, language: 'typescript' }),
-        })}
+        <DocSection
+          title="Array fields"
+          id="arrays"
+          description="Dynamic lists (medications, addresses, contacts) with append/remove and per-item field access."
+        >
+          <CodeBlock code={ARRAY_CODE} language="typescript" />
+        </DocSection>
 
-        {DocSection({
-          title: 'Form state signals',
-          id: 'state',
-          children: CodeBlock({ code: FORM_STATE_CODE, language: 'typescript' }),
-        })}
+        <DocSection
+          title="Form state signals"
+          id="state"
+        >
+          <CodeBlock code={FORM_STATE_CODE} language="typescript" />
+        </DocSection>
 
-        {DocSection({
-          title: 'Live example',
-          id: 'live',
-          children: LiveExample({
-            title: 'Login form with Zod validation',
-            description: 'Blur a field to trigger validation',
-            component: LoginFormExample,
-            code: LIVE_CODE,
-          }),
-        })}
+        <DocSection
+          title="Live example"
+          id="live"
+        >
+          <LiveExample
+            title="Login form with Zod validation"
+            description="Blur a field to trigger validation"
+            component={LoginFormExample}
+            code={LIVE_CODE}
+          />
+        </DocSection>
       </div>
     );
   },

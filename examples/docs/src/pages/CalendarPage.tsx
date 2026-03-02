@@ -131,49 +131,52 @@ export const CalendarPage = createComponent({
             Scheduling calendar with Day, Week, Month, and Agenda views.
             Supports resource columns (therapists, rooms), drag & drop, event resizing, and recurring events.
           </p>
-          {CodeBlock({ code: `pnpm add @liteforge/calendar`, language: 'bash' })}
-          {CodeBlock({ code: `import { createCalendar } from '@liteforge/calendar';`, language: 'typescript' })}
+          <CodeBlock code={`pnpm add @liteforge/calendar`} language="bash" />
+          <CodeBlock code={`import { createCalendar } from '@liteforge/calendar';`} language="typescript" />
         </div>
 
-        {DocSection({
-          title: 'createCalendar()',
-          id: 'setup',
-          description: 'Pass events as a reactive function and configure the view, locale, and time range.',
-          children: (
-            <div>
-              {CodeBlock({ code: SETUP_CODE, language: 'typescript' })}
-              {ApiTable({ rows: CALENDAR_API })}
-            </div>
-          ),
-        })}
+        <DocSection
+          title="createCalendar()"
+          id="setup"
+          description="Pass events as a reactive function and configure the view, locale, and time range."
+        >
+          <div>
+            <CodeBlock code={SETUP_CODE} language="typescript" />
+            <ApiTable rows={CALENDAR_API} />
+          </div>
+        </DocSection>
 
-        {DocSection({
-          title: 'Resources',
-          id: 'resources',
-          description: 'In day view, resources (doctors, rooms) appear as parallel columns. Events are assigned to a resource via resourceId.',
-          children: CodeBlock({ code: RESOURCES_CODE, language: 'typescript' }),
-        })}
+        <DocSection
+          title="Resources"
+          id="resources"
+          description="In day view, resources (doctors, rooms) appear as parallel columns. Events are assigned to a resource via resourceId."
+        >
+          <CodeBlock code={RESOURCES_CODE} language="typescript" />
+        </DocSection>
 
-        {DocSection({
-          title: 'Event handlers',
-          id: 'event-handlers',
-          description: 'Handle drag & drop, resize, slot click, and event click to create/update your event signal.',
-          children: CodeBlock({ code: EVENTS_CODE, language: 'typescript' }),
-        })}
+        <DocSection
+          title="Event handlers"
+          id="event-handlers"
+          description="Handle drag & drop, resize, slot click, and event click to create/update your event signal."
+        >
+          <CodeBlock code={EVENTS_CODE} language="typescript" />
+        </DocSection>
 
-        {DocSection({
-          title: 'Recurring events',
-          id: 'recurring',
-          description: 'Define recurring rules with frequency, interval, end date, and exclude dates.',
-          children: CodeBlock({ code: RECURRING_CODE, language: 'typescript' }),
-        })}
+        <DocSection
+          title="Recurring events"
+          id="recurring"
+          description="Define recurring rules with frequency, interval, end date, and exclude dates."
+        >
+          <CodeBlock code={RECURRING_CODE} language="typescript" />
+        </DocSection>
 
-        {DocSection({
-          title: 'Navigation & view switching',
-          id: 'navigation',
-          description: 'All navigation is programmatic — or use calendar.Toolbar() for a built-in toolbar with prev/next/today and view selector.',
-          children: CodeBlock({ code: NAVIGATION_CODE, language: 'typescript' }),
-        })}
+        <DocSection
+          title="Navigation & view switching"
+          id="navigation"
+          description="All navigation is programmatic — or use calendar.Toolbar() for a built-in toolbar with prev/next/today and view selector."
+        >
+          <CodeBlock code={NAVIGATION_CODE} language="typescript" />
+        </DocSection>
 
         <div class="mt-8 p-4 rounded-lg border border-amber-800/40 bg-amber-950/20 text-sm">
           <p class="font-semibold text-amber-300 mb-1">Live example</p>

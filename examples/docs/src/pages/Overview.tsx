@@ -100,7 +100,7 @@ export const Overview = createComponent({
         <div class="mb-12">
           <h2 class="text-lg font-semibold text-white mb-1">Quick start</h2>
           <p class="text-sm text-neutral-400 mb-3">A reactive counter in 15 lines:</p>
-          {CodeBlock({ code: QUICKSTART, language: 'tsx' })}
+          <CodeBlock code={QUICKSTART} language="tsx" />
         </div>
 
         {/* Package map */}

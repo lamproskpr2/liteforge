@@ -193,62 +193,61 @@ export const QueryPage = createComponent({
             Declarative data fetching with automatic caching, loading/error states, and reactive keys.
             Mutations automatically invalidate related queries so your UI stays in sync.
           </p>
-          {CodeBlock({ code: `pnpm add @liteforge/query`, language: 'bash' })}
-          {CodeBlock({ code: `import { createQuery, createMutation } from '@liteforge/query';`, language: 'typescript' })}
+          <CodeBlock code={`pnpm add @liteforge/query`} language="bash" />
+          <CodeBlock code={`import { createQuery, createMutation } from '@liteforge/query';`} language="typescript" />
         </div>
 
-        {DocSection({
-          title: 'The problem it solves',
-          id: 'problem',
-          children: (
-            <div class="space-y-0">
-              {CodeBlock({ code: PROBLEM_CODE, language: 'typescript', title: '❌ Without — manual state' })}
-              {CodeBlock({ code: SOLUTION_CODE, language: 'typescript', title: '✅ With @liteforge/query' })}
-            </div>
-          ),
-        })}
+        <DocSection
+          title="The problem it solves"
+          id="problem"
+        >
+          <div class="space-y-0">
+            <CodeBlock code={PROBLEM_CODE} language="typescript" title="❌ Without — manual state" />
+            <CodeBlock code={SOLUTION_CODE} language="typescript" title="✅ With @liteforge/query" />
+          </div>
+        </DocSection>
 
-        {DocSection({
-          title: 'createQuery()',
-          id: 'create-query',
-          description: 'Fetches data and caches the result. Returns reactive signals for data, loading, and error state.',
-          children: (
-            <div>
-              {CodeBlock({ code: QUERY_CODE, language: 'typescript' })}
-              {ApiTable({ rows: QUERY_API })}
-            </div>
-          ),
-        })}
+        <DocSection
+          title="createQuery()"
+          id="create-query"
+          description="Fetches data and caches the result. Returns reactive signals for data, loading, and error state."
+        >
+          <div>
+            <CodeBlock code={QUERY_CODE} language="typescript" />
+            <ApiTable rows={QUERY_API} />
+          </div>
+        </DocSection>
 
-        {DocSection({
-          title: 'Reactive keys',
-          id: 'reactive-keys',
-          description: 'Pass a function as key — when any signal inside it changes, the query automatically re-fetches with the new parameters.',
-          children: CodeBlock({ code: REACTIVE_KEY_CODE, language: 'typescript' }),
-        })}
+        <DocSection
+          title="Reactive keys"
+          id="reactive-keys"
+          description="Pass a function as key — when any signal inside it changes, the query automatically re-fetches with the new parameters."
+        >
+          <CodeBlock code={REACTIVE_KEY_CODE} language="typescript" />
+        </DocSection>
 
-        {DocSection({
-          title: 'createMutation()',
-          id: 'mutation',
-          description: 'For write operations (POST, PUT, DELETE). Invalidate related queries on success to keep the cache fresh.',
-          children: (
-            <div>
-              {CodeBlock({ code: MUTATION_CODE, language: 'typescript' })}
-              {ApiTable({ rows: MUTATION_API })}
-            </div>
-          ),
-        })}
+        <DocSection
+          title="createMutation()"
+          id="mutation"
+          description="For write operations (POST, PUT, DELETE). Invalidate related queries on success to keep the cache fresh."
+        >
+          <div>
+            <CodeBlock code={MUTATION_CODE} language="typescript" />
+            <ApiTable rows={MUTATION_API} />
+          </div>
+        </DocSection>
 
-        {DocSection({
-          title: 'Live example — reactive pagination',
-          id: 'live',
-          description: 'Click Next/Prev to change postId — the query key changes, a new fetch fires, cached pages are reused.',
-          children: LiveExample({
-            title: 'createQuery with reactive key',
-            component: QueryExample,
-            code: LIVE_CODE,
-          }),
-        })}
+        <DocSection
+          title="Live example — reactive pagination"
+          id="live"
+          description="Click Next/Prev to change postId — the query key changes, a new fetch fires, cached pages are reused."
+        >
+          <LiveExample
+            title="createQuery with reactive key"
+            component={QueryExample}
+            code={LIVE_CODE}
+          />
+        </DocSection>
       </div>
     );
   },

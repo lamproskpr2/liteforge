@@ -32,26 +32,27 @@ function TableExampleDocs(): Node {
   const table = createTable<Patient>({
     data: () => data(),
     columns: [
-      { key: 'id',     header: 'ID',     sortable: true,  cell: (v) => document.createTextNode(String(v)) },
-      { key: 'name',   header: 'Name',   sortable: true,  cell: (v) => document.createTextNode(String(v)) },
-      { key: 'age',    header: 'Age',    sortable: true,  cell: (v) => document.createTextNode(String(v)) },
-      { key: 'status', header: 'Status', sortable: false, cell: (v) => document.createTextNode(String(v)) },
+      { key: 'id',     header: 'ID',     sortable: true,  cell: (v) => <span>{String(v)}</span> },
+      { key: 'name',   header: 'Name',   sortable: true,  cell: (v) => <span>{String(v)}</span> },
+      { key: 'age',    header: 'Age',    sortable: true,  cell: (v) => <span>{String(v)}</span> },
+      { key: 'status', header: 'Status', sortable: false, cell: (v) => <span>{String(v)}</span> },
     ],
     pagination: { pageSize: 3 },
     selection: { enabled: true, mode: 'multi' },
     styles: {
-      bg:           'rgb(17, 17, 27)',
-      border:       'rgb(49, 50, 68)',
+      bg:           '#0a0a0a',
+      border:       '#262626',
       borderRadius: '10px',
-      headerBg:     'rgb(24, 24, 37)',
-      headerColor:  'rgb(205, 214, 244)',
-      rowBg:        'rgb(30, 30, 46)',
-      rowBgHover:   'rgb(49, 50, 68)',
-      rowBgSelected:'rgb(69, 71, 90)',
-      cellColor:    'rgb(205, 214, 244)',
-      paginationBg: 'rgb(24, 24, 37)',
-      searchBorder: 'rgb(69, 71, 90)',
-      accentColor:  'rgb(137, 180, 250)',
+      headerBg:     '#171717',
+      headerColor:  '#d4d4d4',
+      rowBg:        '#0f0f0f',
+      rowBgStriped: '#0d0d0d',
+      rowBgHover:   '#1a1a1a',
+      rowBgSelected:'#1e293b',
+      cellColor:    '#d4d4d4',
+      paginationBg: '#111111',
+      searchBorder: '#404040',
+      accentColor:  '#6366f1',
     },
   });
 
@@ -66,10 +67,10 @@ function TableExampleTailwind(): Node {
   const table = createTable<Patient>({
     data: () => data(),
     columns: [
-      { key: 'id',     header: 'ID',     sortable: true,  cell: (v) => document.createTextNode(String(v)) },
-      { key: 'name',   header: 'Name',   sortable: true,  cell: (v) => document.createTextNode(String(v)) },
-      { key: 'age',    header: 'Age',    sortable: true,  cell: (v) => document.createTextNode(String(v)) },
-      { key: 'status', header: 'Status', sortable: false, cell: (v) => document.createTextNode(String(v)) },
+      { key: 'id',     header: 'ID',     sortable: true,  cell: (v) => <span>{String(v)}</span> },
+      { key: 'name',   header: 'Name',   sortable: true,  cell: (v) => <span>{String(v)}</span> },
+      { key: 'age',    header: 'Age',    sortable: true,  cell: (v) => <span>{String(v)}</span> },
+      { key: 'status', header: 'Status', sortable: false, cell: (v) => <span>{String(v)}</span> },
     ],
     pagination: { pageSize: 3 },
     selection: { enabled: true, mode: 'multi' },
@@ -203,16 +204,16 @@ const STYLES_TOKEN_CODE = `const table = createTable<Patient>({
   columns: [...],
   // Layer 2: per-instance CSS variable overrides
   styles: {
-    bg:           'rgb(17, 17, 27)',
-    border:       'rgb(49, 50, 68)',
+    bg:           '#0a0a0a',
+    border:       '#262626',
     borderRadius: '10px',
-    headerBg:     'rgb(24, 24, 37)',
-    headerColor:  'rgb(205, 214, 244)',
-    rowBg:        'rgb(30, 30, 46)',
-    rowBgHover:   'rgb(49, 50, 68)',
-    cellColor:    'rgb(205, 214, 244)',
-    accentColor:  'rgb(137, 180, 250)',
-    paginationBg: 'rgb(24, 24, 37)',
+    headerBg:     '#171717',
+    headerColor:  '#d4d4d4',
+    rowBg:        '#0f0f0f',
+    rowBgHover:   '#1a1a1a',
+    cellColor:    '#d4d4d4',
+    accentColor:  '#6366f1',
+    paginationBg: '#111111',
   },
 });`;
 
@@ -276,101 +277,104 @@ export const TablePage = createComponent({
             Reactive data grid with sorting, filtering, pagination, and row selection.
             Data is a signal — the table automatically re-renders when data changes.
           </p>
-          {CodeBlock({ code: `pnpm add @liteforge/table`, language: 'bash' })}
-          {CodeBlock({ code: `import { createTable } from '@liteforge/table';`, language: 'typescript' })}
+          <CodeBlock code={`pnpm add @liteforge/table`} language="bash" />
+          <CodeBlock code={`import { createTable } from '@liteforge/table';`} language="typescript" />
         </div>
 
-        {DocSection({
-          title: 'createTable()',
-          id: 'create-table',
-          description: 'Define columns, data source, and options. Call table.Root() to render.',
-          children: (
-            <div>
-              {CodeBlock({ code: SETUP_CODE, language: 'tsx' })}
-              {ApiTable({ rows: TABLE_API })}
-            </div>
-          ),
-        })}
+        <DocSection
+          title="createTable()"
+          id="create-table"
+          description="Define columns, data source, and options. Call table.Root() to render."
+        >
+          <div>
+            <CodeBlock code={SETUP_CODE} language="tsx" />
+            <ApiTable rows={TABLE_API} />
+          </div>
+        </DocSection>
 
-        {DocSection({
-          title: 'Column definitions',
-          id: 'columns',
-          description: 'Each column can have a custom cell renderer for badges, buttons, or any DOM element.',
-          children: CodeBlock({ code: COLUMNS_CODE, language: 'tsx' }),
-        })}
+        <DocSection
+          title="Column definitions"
+          id="columns"
+          description="Each column can have a custom cell renderer for badges, buttons, or any DOM element."
+        >
+          <CodeBlock code={COLUMNS_CODE} language="tsx" />
+        </DocSection>
 
-        {DocSection({
-          title: 'Filters',
-          id: 'filters',
-          description: 'Add search and filter controls with built-in filter types: text, select, boolean, number range.',
-          children: CodeBlock({ code: FILTER_CODE, language: 'typescript' }),
-        })}
+        <DocSection
+          title="Filters"
+          id="filters"
+          description="Add search and filter controls with built-in filter types: text, select, boolean, number range."
+        >
+          <CodeBlock code={FILTER_CODE} language="typescript" />
+        </DocSection>
 
-        {DocSection({
-          title: 'Row selection',
-          id: 'selection',
-          description: 'Single or multi-select with reactive selectedRows() signal.',
-          children: CodeBlock({ code: SELECTION_CODE, language: 'typescript' }),
-        })}
+        <DocSection
+          title="Row selection"
+          id="selection"
+          description="Single or multi-select with reactive selectedRows() signal."
+        >
+          <CodeBlock code={SELECTION_CODE} language="typescript" />
+        </DocSection>
 
-        {DocSection({
-          title: 'Table state',
-          id: 'state',
-          description: 'All table state (sort, page, filters) is exposed as signals — read or set programmatically.',
-          children: CodeBlock({ code: STATE_CODE, language: 'typescript' }),
-        })}
+        <DocSection
+          title="Table state"
+          id="state"
+          description="All table state (sort, page, filters) is exposed as signals — read or set programmatically."
+        >
+          <CodeBlock code={STATE_CODE} language="typescript" />
+        </DocSection>
 
-        {DocSection({
-          title: 'Styling',
-          id: 'styling',
-          description: 'Three layers of styling control — from full defaults to fully custom Tailwind.',
-          children: (
-            <div>
-              <p class="text-neutral-400 text-sm mb-4">
-                The table uses a 3-layer cascade. Each layer is independent and composable:
-              </p>
-              {ApiTable({ rows: [
-                { name: 'unstyled: true', type: 'Layer 0', description: 'No CSS injected at all — full control for custom design systems' },
-                { name: '(automatic)', type: 'Layer 1', description: 'Default theme via CSS custom properties — works out of the box' },
-                { name: 'styles: {}', type: 'Layer 2', description: 'Per-instance token overrides — inline CSS vars scoped to that table only' },
-                { name: 'classes: {}', type: 'Layer 3', description: 'Class overrides per element — Tailwind utility classes, BEM variants, etc.' },
-              ] as ApiRow[]})}
-            </div>
-          ),
-        })}
+        <DocSection
+          title="Styling"
+          id="styling"
+          description="Three layers of styling control — from full defaults to fully custom Tailwind."
+        >
+          <div>
+            <p class="text-neutral-400 text-sm mb-4">
+              The table uses a 3-layer cascade. Each layer is independent and composable:
+            </p>
+            <ApiTable rows={[
+              { name: 'unstyled: true', type: 'Layer 0', description: 'No CSS injected at all — full control for custom design systems' },
+              { name: '(automatic)', type: 'Layer 1', description: 'Default theme via CSS custom properties — works out of the box' },
+              { name: 'styles: {}', type: 'Layer 2', description: 'Per-instance token overrides — inline CSS vars scoped to that table only' },
+              { name: 'classes: {}', type: 'Layer 3', description: 'Class overrides per element — Tailwind utility classes, BEM variants, etc.' },
+            ] as ApiRow[]} />
+          </div>
+        </DocSection>
 
-        {DocSection({
-          title: 'Style tokens',
-          id: 'style-tokens',
-          description: 'styles: {} maps named tokens to CSS custom properties on the root element. Child elements inherit them automatically.',
-          children: (
-            <div>
-              {ApiTable({ rows: STYLE_TOKENS_API })}
-            </div>
-          ),
-        })}
+        <DocSection
+          title="Style tokens"
+          id="style-tokens"
+          description="styles: {} maps named tokens to CSS custom properties on the root element. Child elements inherit them automatically."
+        >
+          <div>
+            <ApiTable rows={STYLE_TOKENS_API} />
+          </div>
+        </DocSection>
 
-        {DocSection({
-          title: 'Live example',
-          id: 'live',
-          description: 'Click column headers to sort. Use checkboxes to select rows. Navigate pages.',
-          children: LiveExample({
-            title: 'Patient list with sort + pagination + selection',
-            component: TableExampleDocs,
-            code: STYLES_TOKEN_CODE,
-          }),
-        })}
+        <DocSection
+          title="Live example"
+          id="live"
+          description="Click column headers to sort. Use checkboxes to select rows. Navigate pages."
+        >
+          <LiveExample
+            title="Patient list with sort + pagination + selection"
+            component={TableExampleDocs}
+            code={STYLES_TOKEN_CODE}
+          />
+        </DocSection>
 
-        {DocSection({
-          title: 'Tailwind only',
-          id: 'tailwind',
-          description: 'unstyled: true removes all default CSS. classes: {} applies Tailwind utilities per element.',
-          children: LiveExample({
-            title: 'Tailwind — unstyled: true + classes: {}',
-            component: TableExampleTailwind,
-            code: TAILWIND_CODE,
-          }),
-        })}
+        <DocSection
+          title="Tailwind only"
+          id="tailwind"
+          description="unstyled: true removes all default CSS. classes: {} applies Tailwind utilities per element."
+        >
+          <LiveExample
+            title="Tailwind — unstyled: true + classes: {}"
+            component={TableExampleTailwind}
+            code={TAILWIND_CODE}
+          />
+        </DocSection>
       </div>
     );
   },

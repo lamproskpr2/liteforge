@@ -119,63 +119,68 @@ export const RouterPage = createComponent({
             Client-side routing with nested routes, lazy loading, route guards, and middleware.
             The docs app you're reading uses it right now.
           </p>
-          {CodeBlock({ code: `pnpm add @liteforge/router`, language: 'bash' })}
-          {CodeBlock({ code: `import { createRouter, createBrowserHistory, Link, RouterOutlet } from '@liteforge/router';`, language: 'typescript' })}
+          <CodeBlock code={`pnpm add @liteforge/router`} language="bash" />
+          <CodeBlock code={`import { createRouter, createBrowserHistory, Link, RouterOutlet } from '@liteforge/router';`} language="typescript" />
         </div>
 
-        {DocSection({
-          title: 'Setup',
-          id: 'setup',
-          description: 'Create a router instance and pass it to createApp(). Routes are matched top-to-bottom.',
-          children: (
-            <div>
-              {CodeBlock({ code: SETUP_CODE, language: 'typescript' })}
-              {ApiTable({ rows: ROUTE_API })}
-            </div>
-          ),
-        })}
+        <DocSection
+          title="Setup"
+          id="setup"
+          description="Create a router instance and pass it to createApp(). Routes are matched top-to-bottom."
+        >
+          <div>
+            <CodeBlock code={SETUP_CODE} language="typescript" />
+            <ApiTable rows={ROUTE_API} />
+          </div>
+        </DocSection>
 
-        {DocSection({
-          title: 'Nested routes',
-          id: 'nested',
-          description: 'Parent components render RouterOutlet() where child routes are mounted. Useful for layouts with sidebars, tabs, or shared headers.',
-          children: CodeBlock({ code: NESTED_CODE, language: 'typescript' }),
-        })}
+        <DocSection
+          title="Nested routes"
+          id="nested"
+          description="Parent components render RouterOutlet() where child routes are mounted. Useful for layouts with sidebars, tabs, or shared headers."
+        >
+          <CodeBlock code={NESTED_CODE} language="typescript" />
+        </DocSection>
 
-        {DocSection({
-          title: 'Lazy loading',
-          id: 'lazy',
-          description: 'Use inline import() expressions directly in route definitions — the router handles wrapping automatically.',
-          children: CodeBlock({ code: LAZY_CODE, language: 'typescript' }),
-        })}
+        <DocSection
+          title="Lazy loading"
+          id="lazy"
+          description="Use inline import() expressions directly in route definitions — the router handles wrapping automatically."
+        >
+          <CodeBlock code={LAZY_CODE} language="typescript" />
+        </DocSection>
 
-        {DocSection({
-          title: 'Link & RouterOutlet',
-          id: 'link',
-          description: 'Link renders an <a> tag with active state detection. RouterOutlet is where matched child routes render.',
-          children: CodeBlock({ code: LINK_CODE, language: 'tsx' }),
-        })}
+        <DocSection
+          title="Link & RouterOutlet"
+          id="link"
+          description="Link renders an <a> tag with active state detection. RouterOutlet is where matched child routes render."
+        >
+          <CodeBlock code={LINK_CODE} language="tsx" />
+        </DocSection>
 
-        {DocSection({
-          title: 'Guards',
-          id: 'guards',
-          description: 'Guards run before navigation completes. Return true to allow, a redirect path to redirect, or false to cancel.',
-          children: CodeBlock({ code: GUARD_CODE, language: 'typescript' }),
-        })}
+        <DocSection
+          title="Guards"
+          id="guards"
+          description="Guards run before navigation completes. Return true to allow, a redirect path to redirect, or false to cancel."
+        >
+          <CodeBlock code={GUARD_CODE} language="typescript" />
+        </DocSection>
 
-        {DocSection({
-          title: 'Middleware',
-          id: 'middleware',
-          description: 'Middleware wraps every navigation. Use it for logging, document title updates, analytics, or scroll restoration.',
-          children: CodeBlock({ code: MIDDLEWARE_CODE, language: 'typescript' }),
-        })}
+        <DocSection
+          title="Middleware"
+          id="middleware"
+          description="Middleware wraps every navigation. Use it for logging, document title updates, analytics, or scroll restoration."
+        >
+          <CodeBlock code={MIDDLEWARE_CODE} language="typescript" />
+        </DocSection>
 
-        {DocSection({
-          title: 'Route params & navigation',
-          id: 'params',
-          description: 'Access route params and query strings reactively. Navigate programmatically with router.navigate().',
-          children: CodeBlock({ code: PARAMS_CODE, language: 'typescript' }),
-        })}
+        <DocSection
+          title="Route params & navigation"
+          id="params"
+          description="Access route params and query strings reactively. Navigate programmatically with router.navigate()."
+        >
+          <CodeBlock code={PARAMS_CODE} language="typescript" />
+        </DocSection>
       </div>
     );
   },

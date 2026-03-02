@@ -219,69 +219,68 @@ export const RuntimePage = createComponent({
             <code class="font-mono text-sm text-indigo-300">For</code>, and{' '}
             <code class="font-mono text-sm text-indigo-300">Switch</code>.
           </p>
-          {CodeBlock({ code: `pnpm add @liteforge/runtime @liteforge/core`, language: 'bash' })}
-          {CodeBlock({ code: `import { createComponent, Show, For } from '@liteforge/runtime';`, language: 'typescript' })}
+          <CodeBlock code={`pnpm add @liteforge/runtime @liteforge/core`} language="bash" />
+          <CodeBlock code={`import { createComponent, Show, For } from '@liteforge/runtime';`} language="typescript" />
         </div>
 
-        {DocSection({
-          title: 'createComponent()',
-          id: 'create-component',
-          description: 'Defines a component — a factory function that creates a DOM node with reactive bindings.',
-          children: (
-            <div>
-              {CodeBlock({ code: COMPONENT_CODE, language: 'tsx' })}
-              {ApiTable({ rows: COMPONENT_API })}
-            </div>
-          ),
-        })}
+        <DocSection
+          title="createComponent()"
+          id="create-component"
+          description="Defines a component — a factory function that creates a DOM node with reactive bindings."
+        >
+          <div>
+            <CodeBlock code={COMPONENT_CODE} language="tsx" />
+            <ApiTable rows={COMPONENT_API} />
+          </div>
+        </DocSection>
 
-        {DocSection({
-          title: 'JSX syntax',
-          id: 'jsx',
-          description: 'LiteForge JSX compiles to direct DOM operations — no virtual DOM. Key rule: reactive expressions need () => wrappers, event handlers do not.',
-          children: CodeBlock({ code: JSX_CODE, language: 'tsx' }),
-        })}
+        <DocSection
+          title="JSX syntax"
+          id="jsx"
+          description="LiteForge JSX compiles to direct DOM operations — no virtual DOM. Key rule: reactive expressions need () => wrappers, event handlers do not."
+        >
+          <CodeBlock code={JSX_CODE} language="tsx" />
+        </DocSection>
 
-        {DocSection({
-          title: 'Show — conditional rendering',
-          id: 'show',
-          description: 'Renders children when the when condition is truthy. Unmounts when falsy.',
-          children: (
-            <div>
-              {CodeBlock({ code: SHOW_CODE, language: 'tsx' })}
-              {LiveExample({
-                title: 'Show',
-                description: 'Toggle visibility',
-                component: ToggleExample,
-                code: TOGGLE_CODE,
-              })}
-            </div>
-          ),
-        })}
+        <DocSection
+          title="Show — conditional rendering"
+          id="show"
+          description="Renders children when the when condition is truthy. Unmounts when falsy."
+        >
+          <div>
+            <CodeBlock code={SHOW_CODE} language="tsx" />
+            <LiveExample
+              title="Show"
+              description="Toggle visibility"
+              component={ToggleExample}
+              code={TOGGLE_CODE}
+            />
+          </div>
+        </DocSection>
 
-        {DocSection({
-          title: 'For — list rendering',
-          id: 'for',
-          description: 'Renders a list of items reactively. Re-renders the minimal set of items when the array changes.',
-          children: (
-            <div>
-              {CodeBlock({ code: FOR_CODE, language: 'tsx' })}
-              {LiveExample({
-                title: 'For',
-                description: 'Press Enter to add items',
-                component: ForExample,
-                code: FOR_LIVE_CODE,
-              })}
-            </div>
-          ),
-        })}
+        <DocSection
+          title="For — list rendering"
+          id="for"
+          description="Renders a list of items reactively. Re-renders the minimal set of items when the array changes."
+        >
+          <div>
+            <CodeBlock code={FOR_CODE} language="tsx" />
+            <LiveExample
+              title="For"
+              description="Press Enter to add items"
+              component={ForExample}
+              code={FOR_LIVE_CODE}
+            />
+          </div>
+        </DocSection>
 
-        {DocSection({
-          title: 'Async lifecycle (load)',
-          id: 'lifecycle',
-          description: 'Use load() for async data fetching. While loading, placeholder() renders. On error, error() renders with a retry() function.',
-          children: CodeBlock({ code: LIFECYCLE_CODE, language: 'tsx' }),
-        })}
+        <DocSection
+          title="Async lifecycle (load)"
+          id="lifecycle"
+          description="Use load() for async data fetching. While loading, placeholder() renders. On error, error() renders with a retry() function."
+        >
+          <CodeBlock code={LIFECYCLE_CODE} language="tsx" />
+        </DocSection>
       </div>
     );
   },

@@ -175,99 +175,90 @@ export const CorePage = createComponent({
             The reactive foundation of LiteForge. Fine-grained signals that track their dependencies
             automatically — no subscriptions, no manual cleanup, no VDOM diffing.
           </p>
-          {CodeBlock({ code: `pnpm add @liteforge/core`, language: 'bash' })}
-          {CodeBlock({ code: `import { signal, computed, effect, batch } from '@liteforge/core';`, language: 'typescript' })}
+          <CodeBlock code={`pnpm add @liteforge/core`} language="bash" />
+          <CodeBlock code={`import { signal, computed, effect, batch } from '@liteforge/core';`} language="typescript" />
         </div>
 
         {/* Concepts */}
-        {DocSection({
-          title: 'How it works',
-          id: 'how-it-works',
-          description: 'Every signal() call creates a reactive cell. When you read a signal inside an effect() or computed(), it registers as a dependency automatically. When the signal changes, only the effects and computed values that depend on it re-run — nothing else.',
-          children: undefined,
-        })}
+        <DocSection
+          title="How it works"
+          id="how-it-works"
+          description="Every signal() call creates a reactive cell. When you read a signal inside an effect() or computed(), it registers as a dependency automatically. When the signal changes, only the effects and computed values that depend on it re-run — nothing else."
+        />
 
         {/* signal() */}
-        {DocSection({
-          title: 'signal()',
-          id: 'signal',
-          description: 'The building block of reactivity. A signal holds a value and notifies dependents when it changes.',
-          children: (
-            <div>
-              {CodeBlock({ code: SIGNAL_CODE, language: 'typescript' })}
-              {ApiTable({ rows: SIGNAL_API })}
-            </div>
-          ),
-        })}
+        <DocSection
+          title="signal()"
+          id="signal"
+          description="The building block of reactivity. A signal holds a value and notifies dependents when it changes."
+        >
+          <div>
+            <CodeBlock code={SIGNAL_CODE} language="typescript" />
+            <ApiTable rows={SIGNAL_API} />
+          </div>
+        </DocSection>
 
         {/* computed() */}
-        {DocSection({
-          title: 'computed()',
-          id: 'computed',
-          description: 'Derives a value from one or more signals. Lazy — only recalculates when a dependency changed and the value is actually read.',
-          children: (
-            <div>
-              {CodeBlock({ code: COMPUTED_CODE, language: 'typescript' })}
-              {ApiTable({ rows: COMPUTED_API })}
-              {LiveExample({
-                title: 'computed() — fullName',
-                description: 'Derived from two signals',
-                component: FullNameExample,
-                code: FULLNAME_CODE,
-              })}
-            </div>
-          ),
-        })}
+        <DocSection
+          title="computed()"
+          id="computed"
+          description="Derives a value from one or more signals. Lazy — only recalculates when a dependency changed and the value is actually read."
+        >
+          <div>
+            <CodeBlock code={COMPUTED_CODE} language="typescript" />
+            <ApiTable rows={COMPUTED_API} />
+            <LiveExample
+              title="computed() — fullName"
+              description="Derived from two signals"
+              component={FullNameExample}
+              code={FULLNAME_CODE}
+            />
+          </div>
+        </DocSection>
 
         {/* effect() */}
-        {DocSection({
-          title: 'effect()',
-          id: 'effect',
-          description: 'Runs a side effect when dependencies change. Returns a dispose function to stop tracking.',
-          children: (
-            <div>
-              {CodeBlock({ code: EFFECT_CODE, language: 'typescript' })}
-              {ApiTable({ rows: EFFECT_API })}
-            </div>
-          ),
-        })}
+        <DocSection
+          title="effect()"
+          id="effect"
+          description="Runs a side effect when dependencies change. Returns a dispose function to stop tracking."
+        >
+          <div>
+            <CodeBlock code={EFFECT_CODE} language="typescript" />
+            <ApiTable rows={EFFECT_API} />
+          </div>
+        </DocSection>
 
         {/* batch() */}
-        {DocSection({
-          title: 'batch()',
-          id: 'batch',
-          description: 'Groups multiple signal updates so dependent effects run only once after all updates complete.',
-          children: CodeBlock({ code: BATCH_CODE, language: 'typescript' }),
-        })}
+        <DocSection
+          title="batch()"
+          id="batch"
+          description="Groups multiple signal updates so dependent effects run only once after all updates complete."
+        >
+          <CodeBlock code={BATCH_CODE} language="typescript" />
+        </DocSection>
 
         {/* Live demo */}
-        {DocSection({
-          title: 'Live example',
-          id: 'live',
-          children: LiveExample({
-            title: 'signal + computed counter',
-            component: CounterExample,
-            code: COUNTER_CODE,
-          }),
-        })}
+        <DocSection title="Live example" id="live">
+          <LiveExample
+            title="signal + computed counter"
+            component={CounterExample}
+            code={COUNTER_CODE}
+          />
+        </DocSection>
 
         {/* Patterns */}
-        {DocSection({
-          title: 'Patterns',
-          id: 'patterns',
-          children: (
-            <div class="space-y-4 text-sm">
-              <div class="p-4 rounded-lg border border-emerald-800/40 bg-emerald-950/20">
-                <p class="font-semibold text-emerald-300 mb-1">✓ Read signals inside effects/JSX expressions</p>
-                <p class="text-neutral-400">Signals are only tracked when read inside a reactive context (effect, computed, or <code class="font-mono text-xs bg-neutral-800 px-1 rounded">{'{() => signal()}'}</code> in JSX).</p>
-              </div>
-              <div class="p-4 rounded-lg border border-red-800/40 bg-red-950/20">
-                <p class="font-semibold text-red-300 mb-1">✗ Don't read signals outside reactive contexts to "cache" them</p>
-                <p class="text-neutral-400">Reading a signal outside of an effect or computed snapshot its value at that moment — changes won't be tracked.</p>
-              </div>
+        <DocSection title="Patterns" id="patterns">
+          <div class="space-y-4 text-sm">
+            <div class="p-4 rounded-lg border border-emerald-800/40 bg-emerald-950/20">
+              <p class="font-semibold text-emerald-300 mb-1">✓ Read signals inside effects/JSX expressions</p>
+              <p class="text-neutral-400">Signals are only tracked when read inside a reactive context (effect, computed, or <code class="font-mono text-xs bg-neutral-800 px-1 rounded">{'{() => signal()}'}</code> in JSX).</p>
             </div>
-          ),
-        })}
+            <div class="p-4 rounded-lg border border-red-800/40 bg-red-950/20">
+              <p class="font-semibold text-red-300 mb-1">✗ Don't read signals outside reactive contexts to "cache" them</p>
+              <p class="text-neutral-400">Reading a signal outside of an effect or computed snapshot its value at that moment — changes won't be tracked.</p>
+            </div>
+          </div>
+        </DocSection>
       </div>
     );
   },

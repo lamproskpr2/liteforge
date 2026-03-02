@@ -141,56 +141,60 @@ export const ClientPage = createComponent({
             TypeScript-first HTTP client. Zero dependencies. Go from raw fetch to fully reactive,
             cached CRUD operations in 4 levels of progressively better DX.
           </p>
-          {CodeBlock({ code: `pnpm add @liteforge/client`, language: 'bash' })}
-          {CodeBlock({ code: `import { createClient, ApiError } from '@liteforge/client';`, language: 'typescript' })}
+          <CodeBlock code={`pnpm add @liteforge/client`} language="bash" />
+          <CodeBlock code={`import { createClient, ApiError } from '@liteforge/client';`} language="typescript" />
         </div>
 
-        {DocSection({
-          title: 'Progressive DX — 4 levels',
-          id: 'contrast',
-          description: 'Start with raw fetch, graduate to client → resource → QueryClient as your needs grow.',
-          children: CodeBlock({ code: CONTRAST_CODE, language: 'typescript' }),
-        })}
+        <DocSection
+          title="Progressive DX — 4 levels"
+          id="contrast"
+          description="Start with raw fetch, graduate to client → resource → QueryClient as your needs grow."
+        >
+          <CodeBlock code={CONTRAST_CODE} language="typescript" />
+        </DocSection>
 
-        {DocSection({
-          title: 'createClient()',
-          id: 'create-client',
-          description: 'Creates a typed HTTP client with default headers, timeout, and retry. Without query option returns Client; with query returns QueryClient.',
-          children: (
-            <div>
-              {CodeBlock({ code: SETUP_CODE, language: 'typescript' })}
-              {ApiTable({ rows: CLIENT_API })}
-            </div>
-          ),
-        })}
+        <DocSection
+          title="createClient()"
+          id="create-client"
+          description="Creates a typed HTTP client with default headers, timeout, and retry. Without query option returns Client; with query returns QueryClient."
+        >
+          <div>
+            <CodeBlock code={SETUP_CODE} language="typescript" />
+            <ApiTable rows={CLIENT_API} />
+          </div>
+        </DocSection>
 
-        {DocSection({
-          title: 'resource() — typed CRUD',
-          id: 'resource',
-          description: 'Binds a resource name to a base path and exposes strongly-typed CRUD methods. No URL strings in your components.',
-          children: CodeBlock({ code: RESOURCE_CODE, language: 'typescript' }),
-        })}
+        <DocSection
+          title="resource() — typed CRUD"
+          id="resource"
+          description="Binds a resource name to a base path and exposes strongly-typed CRUD methods. No URL strings in your components."
+        >
+          <CodeBlock code={RESOURCE_CODE} language="typescript" />
+        </DocSection>
 
-        {DocSection({
-          title: 'QueryClient — reactive resources',
-          id: 'query-client',
-          description: 'Pass { query } to createClient() to get a QueryClient. resource() then returns QueryResource — use* methods are required (not optional), no ! needed.',
-          children: CodeBlock({ code: QUERY_CLIENT_CODE, language: 'typescript' }),
-        })}
+        <DocSection
+          title="QueryClient — reactive resources"
+          id="query-client"
+          description="Pass { query } to createClient() to get a QueryClient. resource() then returns QueryResource — use* methods are required (not optional), no ! needed."
+        >
+          <CodeBlock code={QUERY_CLIENT_CODE} language="typescript" />
+        </DocSection>
 
-        {DocSection({
-          title: 'Interceptors',
-          id: 'interceptors',
-          description: 'Intercept every request and response. Perfect for auth token injection, retry-on-401, or global error handling.',
-          children: CodeBlock({ code: INTERCEPTOR_CODE, language: 'typescript' }),
-        })}
+        <DocSection
+          title="Interceptors"
+          id="interceptors"
+          description="Intercept every request and response. Perfect for auth token injection, retry-on-401, or global error handling."
+        >
+          <CodeBlock code={INTERCEPTOR_CODE} language="typescript" />
+        </DocSection>
 
-        {DocSection({
-          title: 'Middleware',
-          id: 'middleware',
-          description: 'Middleware wraps the entire request pipeline — useful for timing, logging, or request transformation.',
-          children: CodeBlock({ code: MIDDLEWARE_CODE, language: 'typescript' }),
-        })}
+        <DocSection
+          title="Middleware"
+          id="middleware"
+          description="Middleware wraps the entire request pipeline — useful for timing, logging, or request transformation."
+        >
+          <CodeBlock code={MIDDLEWARE_CODE} language="typescript" />
+        </DocSection>
       </div>
     );
   },
