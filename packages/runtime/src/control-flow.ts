@@ -6,7 +6,7 @@
  */
 
 import { effect } from '@liteforge/core';
-import type { ComponentInstance, ComponentFactory, RenderFunction } from './types.js';
+import type { ComponentInstance, ComponentFactory, ComponentFactoryInternal, RenderFunction } from './types.js';
 import { isComponentFactory } from './component.js';
 
 // ============================================================================
@@ -559,7 +559,7 @@ export function Dynamic<P extends Record<string, unknown>>(config: DynamicConfig
       const discriminated = discriminateDynamicComponent(comp);
 
       if (discriminated.kind === 'factory') {
-        currentInstance = discriminated.value(currentProps);
+        currentInstance = (discriminated.value as unknown as ComponentFactoryInternal)(currentProps);
         // Create a temporary container to get the node
         const tempContainer = document.createElement('div');
         currentInstance.mount(tempContainer);

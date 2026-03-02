@@ -77,7 +77,18 @@ const enum ComponentState {
  * });
  * ```
  */
-// Overload 1: With props schema - computes which props are optional based on defaults
+// Overload 1: Explicit generic props type parameter — createComponent<MyProps>({...})
+// This is the preferred pattern for typed components without a schema object.
+// Uses `object` constraint (not Record<string, unknown>) for compatibility with
+// exactOptionalPropertyTypes=true, where optional-propertied interfaces don't
+// satisfy Record<string, unknown> due to missing index signature.
+export function createComponent<
+  TProps extends object,
+  D = undefined,
+  S = undefined,
+>(definition: ComponentDefinition<TProps, D, S> & { props?: never }): ComponentFactory<TProps, TProps>;
+
+// Overload 2: With props schema - computes which props are optional based on defaults
 export function createComponent<
   Schema extends Record<string, PropDefinition<unknown>>,
   P extends { [K in keyof Schema]: Schema[K] extends PropDefinition<infer T> ? T : never },
@@ -87,16 +98,16 @@ export function createComponent<
   definition: ComponentDefinition<P, D, S> & { props: Schema }
 ): ComponentFactory<P, Simplify<InputPropsFromSchema<Schema, P>>>;
 
-// Overload 2: Without props schema - all props use the inferred P type directly
+// Overload 3: Without props schema - all props use the inferred P type directly
 export function createComponent<
-  P extends Record<string, unknown> = Record<string, unknown>,
+  P extends object = Record<string, unknown>,
   D = undefined,
   S = undefined,
 >(definition: ComponentDefinition<P, D, S>): ComponentFactory<P, P>;
 
 // Implementation
 export function createComponent<
-  P extends Record<string, unknown>,
+  P extends object,
   D,
   S,
 >(definition: ComponentDefinition<P, D, S>): ComponentFactory<P, Partial<P>> {
@@ -104,8 +115,10 @@ export function createComponent<
     return createComponentInstance(definition, inputProps as P);
   };
 
-  // Mark as LiteForge component for detection
-  const typedFactory = factory as ComponentFactory<P, Partial<P>>;
+  // Mark as LiteForge component for detection.
+  // The factory returns ComponentInstance at runtime, but ComponentFactory
+  // declares the call return as Node for JSX compat — cast through unknown.
+  const typedFactory = factory as unknown as ComponentFactory<P, Partial<P>>;
   typedFactory.__liteforge_component = true;
 
   // Attach HMR metadata and register in the component registry
@@ -114,7 +127,7 @@ export function createComponent<
     typedFactory.__hmrOptions = definition as ComponentDefinition<P, unknown, unknown>;
     // Register so fullRerender() always reads latest code at call-time
     if (isDev) {
-      registerComponent(definition.__hmrId, definition as ComponentDefinition<Record<string, unknown>, unknown, unknown>);
+      registerComponent(definition.__hmrId, definition as ComponentDefinition<object, unknown, unknown>);
     }
   }
 
@@ -125,7 +138,7 @@ export function createComponent<
  * Create an instance of a component with full lifecycle management.
  */
 function createComponentInstance<
-  P extends Record<string, unknown>,
+  P extends object,
   D,
   S,
 >(
@@ -245,7 +258,7 @@ function createComponentInstance<
     return currentNode;
   }
 
-  function updateProps(newProps: Record<string, unknown>): void {
+  function updateProps(newProps: object): void {
     props = resolveProps(definition.props, newProps as P);
     // In a full implementation, this would trigger a re-render
     // For now, props are static after initial render
@@ -390,7 +403,7 @@ function createComponentInstance<
 /**
  * Resolve props with defaults and type checking.
  */
-function resolveProps<P extends Record<string, unknown>>(
+function resolveProps<P extends object>(
   propsSchema: Record<string, { default?: unknown; required?: boolean }> | undefined,
   inputProps: P
 ): P {

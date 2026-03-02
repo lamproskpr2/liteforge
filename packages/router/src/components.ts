@@ -1,6 +1,6 @@
 import { effect } from '@liteforge/core';
 import { use, pushContext, popContext, isComponentFactory } from '@liteforge/runtime';
-import type { ComponentInstance } from '@liteforge/runtime';
+import type { ComponentInstance, ComponentFactoryInternal } from '@liteforge/runtime';
 import type { Router, RouteComponent, LazyComponent, CompiledRoute } from './types.js';
 import { isPathActive } from './route-matcher.js';
 import { isLazyComponent, getLazyDelay, getLazyLoading, getLazyError } from './lazy.js';
@@ -135,7 +135,7 @@ export function RouterOutlet(config: RouterOutletConfig = {}): Node {
       pushContext({ 'router:outlet-depth': depth + 1 });
       
       try {
-        currentInstance = component(props);
+        currentInstance = (component as unknown as ComponentFactoryInternal)(props);
         const tempContainer = document.createElement('div');
         currentInstance.mount(tempContainer);
         

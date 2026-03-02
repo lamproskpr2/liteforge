@@ -54,7 +54,13 @@ export function createJsxVisitor(state: JsxTransformState): Visitor {
  */
 export function transformJsxElement(element: t.JSXElement): t.CallExpression {
   const tag = getTagExpression(element.openingElement);
-  const props = transformAttributes(element.openingElement.attributes);
+  // For component tags (PascalCase), props are passed as-is — the component
+  // manages its own reactivity. Only HTML element props need getter wrapping.
+  const tagName = t.isJSXIdentifier(element.openingElement.name)
+    ? element.openingElement.name.name
+    : '';
+  const isComponentTag = isComponent(tagName);
+  const props = transformAttributes(element.openingElement.attributes, isComponentTag);
   const children = transformChildren(element.children);
 
   return createHCall(tag, props, children);
@@ -131,10 +137,13 @@ function jsxMemberToMemberExpression(
 // =============================================================================
 
 /**
- * Transform JSX attributes into an object expression or null
+ * Transform JSX attributes into an object expression or null.
+ * @param isComponentTag - When true (PascalCase tag), props are passed as-is
+ *   without getter wrapping. Components manage their own reactivity.
  */
 export function transformAttributes(
-  attributes: Array<t.JSXAttribute | t.JSXSpreadAttribute>
+  attributes: Array<t.JSXAttribute | t.JSXSpreadAttribute>,
+  isComponentTag = false,
 ): t.ObjectExpression | null {
   if (attributes.length === 0) {
     return null;
@@ -148,7 +157,7 @@ export function transformAttributes(
       properties.push(t.spreadElement(attr.argument));
     } else {
       // name={value} or name="value" or name (boolean shorthand)
-      const prop = transformAttribute(attr);
+      const prop = transformAttribute(attr, isComponentTag);
       if (prop !== null) {
         properties.push(prop);
       }
@@ -163,9 +172,10 @@ export function transformAttributes(
 }
 
 /**
- * Transform a single JSX attribute into an object property
+ * Transform a single JSX attribute into an object property.
+ * @param isComponentTag - When true, skip getter wrapping (component props).
  */
-export function transformAttribute(attr: t.JSXAttribute): t.ObjectProperty | null {
+export function transformAttribute(attr: t.JSXAttribute, isComponentTag = false): t.ObjectProperty | null {
   const name = getAttributeName(attr.name);
   const value = attr.value;
 
@@ -194,20 +204,20 @@ export function transformAttribute(attr: t.JSXAttribute): t.ObjectProperty | nul
       return null;
     }
 
-    const processedValue = processAttributeValue(name, expr);
+    const processedValue = processAttributeValue(name, expr, isComponentTag);
     return t.objectProperty(
       t.stringLiteral(name),
       processedValue
     );
   }
 
-  // JSX element as attribute value (rare but valid)
+  // JSX element as attribute value (e.g. component={<Foo />})
   if (t.isJSXElement(value)) {
     const hCall = transformJsxElement(value);
-    // Wrap JSX element in getter since it could contain reactive content
+    // For HTML elements wrap in getter; for components pass the h() call directly
     return t.objectProperty(
       t.stringLiteral(name),
-      wrapInGetter(hCall)
+      isComponentTag ? hCall : wrapInGetter(hCall)
     );
   }
 
@@ -216,7 +226,7 @@ export function transformAttribute(attr: t.JSXAttribute): t.ObjectProperty | nul
     const hCall = transformJsxFragment(value);
     return t.objectProperty(
       t.stringLiteral(name),
-      wrapInGetter(hCall)
+      isComponentTag ? hCall : wrapInGetter(hCall)
     );
   }
 
@@ -237,15 +247,23 @@ function getAttributeName(name: t.JSXIdentifier | t.JSXNamespacedName): string {
 /**
  * Process an attribute value expression.
  * - Event handlers (onX): never wrap
+ * - Component props (isComponentTag=true): never wrap — components manage
+ *   their own reactivity and receive plain values
  * - Static values: don't wrap
- * - Dynamic expressions: wrap in getter
+ * - Dynamic expressions on HTML elements: wrap in getter
  */
 export function processAttributeValue(
   propName: string,
-  expr: t.Expression
+  expr: t.Expression,
+  isComponentTag = false,
 ): t.Expression {
   // Event handlers are never wrapped
   if (isEventHandler(propName)) {
+    return expr;
+  }
+
+  // Component props are never wrapped — components manage their own reactivity
+  if (isComponentTag) {
     return expr;
   }
 

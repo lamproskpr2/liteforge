@@ -31,14 +31,14 @@ export interface PropDefinition<T = unknown> {
 /**
  * Props schema - maps prop names to their definitions.
  */
-export type PropsSchema<T extends Record<string, unknown>> = {
+export type PropsSchema<T extends object> = {
   [K in keyof T]: PropDefinition<T[K]>;
 };
 
 /**
  * Extract the actual prop types from a props schema.
  */
-export type ExtractProps<S extends PropsSchema<Record<string, unknown>>> = {
+export type ExtractProps<S extends PropsSchema<object>> = {
   [K in keyof S]: S[K] extends PropDefinition<infer T> ? T : never;
 };
 
@@ -195,7 +195,7 @@ export interface DestroyedArgs<P, S> {
  * Full component definition passed to createComponent().
  */
 export interface ComponentDefinition<
-  P extends Record<string, unknown> = Record<string, unknown>,
+  P extends object = Record<string, unknown>,
   D = unknown,
   S = unknown,
 > {
@@ -247,21 +247,36 @@ export interface ComponentDefinition<
  * computes the proper InputP based on which props have defaults.
  */
 export interface ComponentFactory<
-  FullP extends Record<string, unknown> = Record<string, unknown>,
+  FullP extends object = Record<string, unknown>,
   InputP = FullP
 > {
-  (props: InputP): ComponentInstance;
+  /**
+   * Calling a ComponentFactory as a JSX tag produces a Node (JSX.Element = Node).
+   * Internally the runtime calls this, detects __liteforge_component, and mounts
+   * the ComponentInstance via h() → createComponentNode().
+   */
+  (props: InputP): Node;
   /** Internal marker for component detection */
   __liteforge_component: true;
   /** HMR identifier (injected by vite-plugin in dev mode) */
   __hmrId?: string;
-  /** 
+  /**
    * Component definition (for HMR to access updated render function).
-   * Typed as unknown for flexibility - HMR code handles type safety.
+   * Typed as `unknown` — HMR registry and accessing code casts appropriately.
    * @internal
    */
-  __hmrOptions?: ComponentDefinition<FullP, unknown, unknown>;
+  __hmrOptions?: unknown;
 }
+
+/**
+ * @internal — used by h(), app.ts, control-flow.ts to call a ComponentFactory
+ * and access the ComponentInstance lifecycle methods. The public ComponentFactory
+ * signature returns Node for JSX compat; this type exposes the real return.
+ */
+export type ComponentFactoryInternal = {
+  (props: object): ComponentInstance;
+  __liteforge_component: true;
+};
 
 /**
  * Internal component instance with lifecycle management.
@@ -274,7 +289,7 @@ export interface ComponentInstance {
   /** Get the current root DOM node */
   getNode(): Node | null;
   /** Update props (triggers re-render if needed) */
-  updateProps(newProps: Record<string, unknown>): void;
+  updateProps(newProps: object): void;
 }
 
 // ============================================================================
@@ -337,7 +352,7 @@ export interface Plugin {
  */
 export interface AppConfig {
   /** Root component to render */
-  root: ComponentFactory<Record<string, unknown>> | (() => Node);
+  root: ComponentFactory<object> | (() => Node);
   
   /** Target element or CSS selector */
   target: string | HTMLElement;

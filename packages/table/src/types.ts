@@ -46,9 +46,9 @@ export interface ColumnDef<T> {
   /** Initial visibility (default: true) */
   visible?: boolean
   /** Custom cell renderer — return JSX/DOM Node */
-  cell?: (value: unknown, row: T) => Node
+  cell?: (value: unknown, row: T) => Node | Element
   /** Custom header renderer */
-  headerCell?: () => Node
+  headerCell?: () => Node | Element
 }
 
 // ─── Sorting ───────────────────────────────────────────────

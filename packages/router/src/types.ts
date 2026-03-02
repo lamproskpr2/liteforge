@@ -52,17 +52,17 @@ export type NavigationTarget =
 /**
  * Component type - either a sync component, ComponentFactory, or lazy-loaded
  */
-export type RouteComponent = 
+export type RouteComponent =
   | (() => HTMLElement | DocumentFragment | Node)
   | { (): HTMLElement | DocumentFragment | Node; displayName?: string }
-  | ComponentFactory<Record<string, unknown>, Record<string, unknown>>;
+  | ComponentFactory<object, object>;
 
 /**
  * Lazy component loader - a function returning a Promise of a module
  */
-export type LazyComponent = 
+export type LazyComponent =
   | (() => Promise<{ default: RouteComponent } | RouteComponent>)
-  | (() => Promise<{ default: ComponentFactory<Record<string, unknown>, Record<string, unknown>> }>);
+  | (() => Promise<{ default: ComponentFactory<object, object> }>);
 
 /**
  * Inline lazy import function - returns a Promise of a module with exports

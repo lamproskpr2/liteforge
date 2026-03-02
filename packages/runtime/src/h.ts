@@ -22,7 +22,7 @@
  */
 
 import { effect } from '@liteforge/core';
-import type { ComponentFactory, RenderFunction } from './types.js';
+import type { ComponentFactory, ComponentFactoryInternal, RenderFunction } from './types.js';
 import { isComponentFactory } from './component.js';
 
 // =============================================================================
@@ -145,13 +145,16 @@ function createComponentNode(
 
   // If it's a ComponentFactory (created with createComponent)
   if (isComponentFactory(component)) {
-    const factory = component;
+    // Cast to internal type to access ComponentInstance lifecycle methods.
+    // The public ComponentFactory type returns Node for JSX compat; the runtime
+    // actually returns ComponentInstance which we mount here.
+    const factory = component as unknown as ComponentFactoryInternal;
     const instance = factory(resolvedProps);
-    
+
     // Create a container to mount into
     const container = document.createDocumentFragment();
     instance.mount(container as unknown as Element);
-    
+
     // Return the mounted node
     const node = instance.getNode();
     return node ?? document.createComment('empty-component');

@@ -5,11 +5,11 @@
  * sets up context, router, plugins, and debug utilities.
  */
 
-import type { 
-  AppConfig, 
-  AppInstance, 
-  ComponentInstance, 
-  ComponentFactory,
+import type {
+  AppConfig,
+  AppInstance,
+  ComponentInstance,
+  ComponentFactoryInternal,
   AnyStore,
 } from './types.js';
 import { initAppContext, clearContext, use } from './context.js';
@@ -165,7 +165,7 @@ export async function createApp(config: AppConfig): Promise<AppInstance> {
     
     if (isComponentFactory(rootConfig)) {
       // It's a ComponentFactory from createComponent()
-      rootInstance = (rootConfig as ComponentFactory<Record<string, unknown>>)({});
+      rootInstance = (rootConfig as unknown as ComponentFactoryInternal)({});
       rootInstance.mount(targetElement);
     } else {
       // It's a simple render function () => Node
@@ -267,7 +267,7 @@ export async function createApp(config: AppConfig): Promise<AppInstance> {
         // from the component registry (updated by createComponent on re-eval)
         if (targetElement) {
           if (isComponentFactory(config.root)) {
-            rootInstance = (config.root as ComponentFactory<Record<string, unknown>>)({});
+            rootInstance = (config.root as unknown as ComponentFactoryInternal)({});
             rootInstance.mount(targetElement);
           } else {
             rootNode = (config.root as () => Node)();

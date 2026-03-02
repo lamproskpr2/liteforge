@@ -362,3 +362,101 @@ describe('isComponentFactory', () => {
     expect(isComponentFactory('string')).toBe(false);
   });
 });
+
+describe('createComponent<TProps> — generic props type parameter', () => {
+  let container: HTMLElement;
+
+  beforeEach(() => {
+    clearContext();
+    initAppContext({});
+    container = document.createElement('div');
+    document.body.appendChild(container);
+  });
+
+  afterEach(() => {
+    document.body.removeChild(container);
+  });
+
+  it('renders with required props', () => {
+    interface CardProps {
+      title: string;
+    }
+
+    const Card = createComponent<CardProps>({
+      name: 'Card',
+      component({ props }) {
+        const h2 = document.createElement('h2');
+        h2.textContent = props.title;
+        return h2;
+      },
+    });
+
+    const instance = Card({ title: 'Hello' });
+    instance.mount(container);
+    expect(container.querySelector('h2')?.textContent).toBe('Hello');
+  });
+
+  it('optional props default to undefined when not passed', () => {
+    interface InfoProps {
+      label: string;
+      icon?: string;
+    }
+
+    const Info = createComponent<InfoProps>({
+      name: 'Info',
+      component({ props }) {
+        const span = document.createElement('span');
+        span.textContent = `${props.icon ?? '📌'} ${props.label}`;
+        return span;
+      },
+    });
+
+    const instance = Info({ label: 'Test' });
+    instance.mount(container);
+    expect(container.textContent).toContain('📌');
+    expect(container.textContent).toContain('Test');
+  });
+
+  it('returns a valid ComponentFactory', () => {
+    interface BtnProps { label: string }
+    const Btn = createComponent<BtnProps>({
+      name: 'Btn',
+      component({ props }) {
+        return document.createTextNode(props.label);
+      },
+    });
+    expect(isComponentFactory(Btn)).toBe(true);
+  });
+
+  it('existing no-props components still work after adding new overload', () => {
+    const Divider = createComponent({
+      name: 'Divider',
+      component() {
+        return document.createElement('hr');
+      },
+    });
+
+    const instance = Divider({});
+    instance.mount(container);
+    expect(container.querySelector('hr')).not.toBeNull();
+  });
+
+  it('setup() receives correctly typed props', () => {
+    interface CounterProps { initial: number }
+    const captured: { initial?: number } = {};
+
+    const Counter = createComponent<CounterProps>({
+      name: 'Counter',
+      setup({ props }) {
+        captured.initial = props.initial;
+        return {};
+      },
+      component() {
+        return document.createTextNode('ok');
+      },
+    });
+
+    Counter({ initial: 42 }).mount(container);
+    expect(captured.initial).toBe(42);
+  });
+});

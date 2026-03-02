@@ -13,6 +13,7 @@ export type {
   ExtractProps,
   ComponentDefinition,
   ComponentFactory,
+  ComponentFactoryInternal,
   ComponentInstance,
   // Context types
   UseFn,

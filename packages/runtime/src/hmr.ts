@@ -45,7 +45,7 @@ declare global {
 }
 
 /** Registry: hmrId → latest ComponentDefinition. Updated on every module re-evaluation. */
-const componentRegistry = new Map<string, ComponentDefinition<Record<string, unknown>, unknown, unknown>>();
+const componentRegistry = new Map<string, ComponentDefinition<object, unknown, unknown>>();
 
 
 // =============================================================================
@@ -54,14 +54,14 @@ const componentRegistry = new Map<string, ComponentDefinition<Record<string, unk
 
 export function registerComponent(
   hmrId: string,
-  definition: ComponentDefinition<Record<string, unknown>, unknown, unknown>
+  definition: ComponentDefinition<object, unknown, unknown>
 ): void {
   componentRegistry.set(hmrId, definition);
 }
 
 export function getLatestDefinition(
   hmrId: string
-): ComponentDefinition<Record<string, unknown>, unknown, unknown> | undefined {
+): ComponentDefinition<object, unknown, unknown> | undefined {
   return componentRegistry.get(hmrId);
 }
 
