@@ -1,6 +1,6 @@
 import { effect } from '@liteforge/core';
 import { modalRegistry, registryVersion } from './modal.js';
-import { injectDefaultStyles } from './styles.js';
+import { injectDefaultStyles, STYLE_TOKEN_MAP } from './styles.js';
 import type { ModalEntry } from './modal.js';
 
 // ─── Focus trap helpers ──────────────────────────────────────
@@ -37,28 +37,35 @@ function trapFocus(modalEl: HTMLElement): (e: KeyboardEvent) => void {
 // ─── Render a single modal overlay ──────────────────────────
 
 function renderOverlay(entry: ModalEntry, onRemove: () => void): HTMLElement {
-  const size = entry.options.size;
+  const { size, styles, classes } = entry.options;
+  const cls = classes;
 
   const overlay = document.createElement('div');
-  overlay.className = `lf-modal-overlay lf-modal-overlay--${size}`;
+  overlay.className = `${cls.overlay ?? 'lf-modal-overlay'} lf-modal-overlay--${size}`;
+
+  // Apply per-instance style token overrides (CSS vars inherit into children)
+  for (const [key, cssVar] of STYLE_TOKEN_MAP) {
+    const value = styles[key];
+    if (value !== undefined) overlay.style.setProperty(cssVar, value);
+  }
 
   const modalEl = document.createElement('div');
-  modalEl.className = 'lf-modal';
+  modalEl.className = cls.modal ?? 'lf-modal';
   modalEl.setAttribute('role', 'dialog');
   modalEl.setAttribute('aria-modal', 'true');
 
   // Header
   const header = document.createElement('div');
-  header.className = 'lf-modal-header';
+  header.className = cls.header ?? 'lf-modal-header';
 
   const titleEl = document.createElement('span');
-  titleEl.className = 'lf-modal-title';
+  titleEl.className = cls.title ?? 'lf-modal-title';
   titleEl.textContent = entry.options.title;
   header.appendChild(titleEl);
 
   if (entry.options.closable) {
     const closeBtn = document.createElement('button');
-    closeBtn.className = 'lf-modal-close';
+    closeBtn.className = cls.close ?? 'lf-modal-close';
     closeBtn.textContent = '✕';
     closeBtn.setAttribute('aria-label', 'Close');
     closeBtn.addEventListener('click', () => entry.close());
@@ -69,7 +76,7 @@ function renderOverlay(entry: ModalEntry, onRemove: () => void): HTMLElement {
 
   // Body
   const body = document.createElement('div');
-  body.className = 'lf-modal-body';
+  body.className = cls.body ?? 'lf-modal-body';
   body.appendChild(entry.contentFn());
   modalEl.appendChild(body);
 

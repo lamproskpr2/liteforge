@@ -5,6 +5,24 @@
  * Injected once when the first modal provider is created (unless unstyled: true).
  */
 
+import type { ModalStyles } from './types.js';
+
+/**
+ * Maps ModalStyles keys to their CSS variable names.
+ * Applied as inline styles on the overlay element so each modal instance
+ * can override the global :root variables without affecting other modals.
+ */
+export const STYLE_TOKEN_MAP: ReadonlyArray<readonly [keyof ModalStyles, string]> = [
+  ['bg',           '--lf-modal-bg'],
+  ['headerBg',     '--lf-modal-header-bg'],
+  ['headerColor',  '--lf-modal-header-color'],
+  ['bodyColor',    '--lf-modal-body-color'],
+  ['closeColor',   '--lf-modal-close-color'],
+  ['backdrop',     '--lf-modal-backdrop'],
+  ['shadow',       '--lf-modal-shadow'],
+  ['borderRadius', '--lf-modal-border-radius'],
+] as const
+
 let stylesInjected = false
 
 const DEFAULT_STYLES = `
@@ -128,6 +146,7 @@ const DEFAULT_STYLES = `
 
 /* ─── Dark Mode Support ────────────────────────────────────── */
 
+.dark,
 [data-theme="dark"] {
   --lf-modal-backdrop: rgba(0, 0, 0, 0.7);
   --lf-modal-bg: #1e1e2e;
@@ -136,6 +155,18 @@ const DEFAULT_STYLES = `
   --lf-modal-header-color: #cdd6f4;
   --lf-modal-body-color: #a6adc8;
   --lf-modal-close-color: #6c7086;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --lf-modal-backdrop: rgba(0, 0, 0, 0.7);
+    --lf-modal-bg: #1e1e2e;
+    --lf-modal-shadow: 0 20px 60px rgba(0, 0, 0, 0.6);
+    --lf-modal-header-bg: #181825;
+    --lf-modal-header-color: #cdd6f4;
+    --lf-modal-body-color: #a6adc8;
+    --lf-modal-close-color: #6c7086;
+  }
 }
 `
 

@@ -1,6 +1,37 @@
 import { createModal } from './modal.js';
 import type { ModalConfig } from './types.js';
 
+// ─── Shared button/input styles using modal CSS variables ────
+
+function styleBtn(btn: HTMLButtonElement, variant: 'primary' | 'secondary'): void {
+  btn.style.cssText = [
+    'display:inline-flex;align-items:center;justify-content:center',
+    'padding:6px 16px;border-radius:6px;font-size:14px;font-weight:500',
+    'cursor:pointer;transition:opacity 0.15s;border:none',
+    variant === 'primary'
+      ? 'background:#4f46e5;color:#fff'
+      : 'background:transparent;color:var(--lf-modal-header-color);border:1px solid rgba(128,128,128,0.35)',
+  ].join(';');
+  btn.addEventListener('mouseenter', () => { btn.style.opacity = '0.85'; });
+  btn.addEventListener('mouseleave', () => { btn.style.opacity = '1'; });
+}
+
+function styleInput(input: HTMLInputElement): void {
+  input.style.cssText = [
+    'width:100%;box-sizing:border-box',
+    'padding:8px 10px;border-radius:6px;font-size:14px',
+    'background:rgba(0,0,0,0.25);color:var(--lf-modal-header-color)',
+    'border:1px solid rgba(128,128,128,0.35)',
+    'outline:none;margin-bottom:16px',
+  ].join(';');
+  input.addEventListener('focus', () => { input.style.borderColor = '#4f46e5'; });
+  input.addEventListener('blur',  () => { input.style.borderColor = 'rgba(128,128,128,0.35)'; });
+}
+
+function styleMsg(msg: HTMLParagraphElement): void {
+  msg.style.cssText = 'margin:0 0 20px;color:var(--lf-modal-body-color);font-size:14px;line-height:1.6';
+}
+
 // ─── confirm() ───────────────────────────────────────────────
 
 export function confirm(
@@ -22,7 +53,7 @@ export function confirm(
         const wrapper = document.createElement('div');
 
         const msg = document.createElement('p');
-        msg.style.margin = '0 0 20px';
+        styleMsg(msg);
         msg.textContent = message;
         wrapper.appendChild(msg);
 
@@ -31,14 +62,14 @@ export function confirm(
 
         const cancelBtn = document.createElement('button');
         cancelBtn.textContent = 'Cancel';
-        cancelBtn.style.cssText = 'padding:8px 16px;border:1px solid #d1d5db;border-radius:6px;background:#fff;cursor:pointer;font-size:14px';
+        styleBtn(cancelBtn, 'secondary');
         cancelBtn.addEventListener('click', () => {
           if (!resolved) { resolved = true; modal.close(); resolve(false); }
         });
 
         const okBtn = document.createElement('button');
         okBtn.textContent = 'OK';
-        okBtn.style.cssText = 'padding:8px 16px;border:none;border-radius:6px;background:#3b82f6;color:#fff;cursor:pointer;font-size:14px';
+        styleBtn(okBtn, 'primary');
         okBtn.addEventListener('click', () => {
           if (!resolved) { resolved = true; modal.close(); resolve(true); }
         });
@@ -82,7 +113,7 @@ export function alert(
         const wrapper = document.createElement('div');
 
         const msg = document.createElement('p');
-        msg.style.margin = '0 0 20px';
+        styleMsg(msg);
         msg.textContent = message;
         wrapper.appendChild(msg);
 
@@ -91,7 +122,7 @@ export function alert(
 
         const okBtn = document.createElement('button');
         okBtn.textContent = 'OK';
-        okBtn.style.cssText = 'padding:8px 16px;border:none;border-radius:6px;background:#3b82f6;color:#fff;cursor:pointer;font-size:14px';
+        styleBtn(okBtn, 'primary');
         okBtn.addEventListener('click', () => {
           modal.close();
           modal.destroy();
@@ -131,14 +162,15 @@ export function prompt(
         const wrapper = document.createElement('div');
 
         const msg = document.createElement('p');
-        msg.style.margin = '0 0 12px';
+        msg.style.cssText = 'margin:0 0 12px;color:var(--lf-modal-body-color);font-size:14px';
         msg.textContent = message;
         wrapper.appendChild(msg);
 
         const input = document.createElement('input');
         input.type = 'text';
         input.value = defaultValue ?? '';
-        input.style.cssText = 'width:100%;padding:8px 10px;border:1px solid #d1d5db;border-radius:6px;font-size:14px;box-sizing:border-box;margin-bottom:16px';
+        styleInput(input);
+        setTimeout(() => input.focus(), 50);
         wrapper.appendChild(input);
 
         const actions = document.createElement('div');
@@ -146,14 +178,14 @@ export function prompt(
 
         const cancelBtn = document.createElement('button');
         cancelBtn.textContent = 'Cancel';
-        cancelBtn.style.cssText = 'padding:8px 16px;border:1px solid #d1d5db;border-radius:6px;background:#fff;cursor:pointer;font-size:14px';
+        styleBtn(cancelBtn, 'secondary');
         cancelBtn.addEventListener('click', () => {
           if (!resolved) { resolved = true; modal.close(); modal.destroy(); resolve(null); }
         });
 
         const okBtn = document.createElement('button');
         okBtn.textContent = 'OK';
-        okBtn.style.cssText = 'padding:8px 16px;border:none;border-radius:6px;background:#3b82f6;color:#fff;cursor:pointer;font-size:14px';
+        styleBtn(okBtn, 'primary');
         okBtn.addEventListener('click', () => {
           if (!resolved) { resolved = true; modal.close(); modal.destroy(); resolve(input.value); }
         });

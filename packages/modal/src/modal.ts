@@ -81,6 +81,8 @@ export function createModal(opts: CreateModalOptions): ModalResult {
     closeOnBackdrop: cfg.closeOnBackdrop ?? true,
     closeOnEsc: cfg.closeOnEsc ?? true,
     unstyled: cfg.unstyled ?? false,
+    styles: cfg.styles ?? {},
+    classes: cfg.classes ?? {},
     onOpen: cfg.onOpen ?? (() => {}),
     onClose: cfg.onClose ?? (() => {}),
   };
