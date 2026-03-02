@@ -1,5 +1,15 @@
 # @liteforge/router
 
+## 0.2.0
+
+### Minor Changes
+
+- Add `titleTemplate` and `useTitle()` for automatic `document.title` management.
+
+  - `titleTemplate: (title: string | undefined) => string` in `RouterOptions` — sets `document.title` reactively on every navigation using `route.meta.title`
+  - `useTitle(string | (() => string))` — per-page override with automatic cleanup on next route change
+  - Priority cascade: `useTitle()` > `route.meta.title` > `titleTemplate` default
+
 ## 0.1.1
 
 ### Patch Changes

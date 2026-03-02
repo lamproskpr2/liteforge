@@ -1,5 +1,11 @@
 # @liteforge/runtime
 
+## 0.2.3
+
+### Patch Changes
+
+- Fix `[object Object]` when a `ComponentFactory` result is used as a JSX child node. `h()` now correctly mounts `ComponentInstance` objects when encountered as children.
+
 ## 0.2.2
 
 ### Patch Changes
