@@ -106,10 +106,80 @@ export type Simplify<T> = { [K in keyof T]: T[K] } & {};
 // Context Types
 // ============================================================================
 
+// ============================================================================
+// Plugin System Types
+// ============================================================================
+
+/**
+ * Registry of known plugins — extend via Declaration Merging in plugin files.
+ *
+ * @example
+ * ```ts
+ * declare module '@liteforge/runtime' {
+ *   interface PluginRegistry { router: Router; }
+ * }
+ * ```
+ */
+export interface PluginRegistry {}
+
+/**
+ * Context passed to a LiteForgePlugin's install() function.
+ */
+export interface PluginContext {
+  /** The resolved target HTMLElement the app is mounted into */
+  target: HTMLElement;
+  /** Register a named value in the app context (accessible via use()) */
+  provide<K extends string, T>(key: K, value: T): void;
+  /**
+   * Read a previously provided value.
+   * Returns undefined if the key has not been registered yet.
+   */
+  resolve<T = unknown>(key: string): T | undefined;
+}
+
+/**
+ * A formal LiteForge plugin with install lifecycle.
+ */
+export interface LiteForgePlugin {
+  /** Unique plugin name — duplicate names throw before any install() runs */
+  name: string;
+  /**
+   * Called during app bootstrap. May return a cleanup function.
+   * Cleanup is called in reverse order on app.unmount().
+   */
+  install(context: PluginContext): void | (() => void);
+}
+
+/**
+ * Builder returned by createApp() — supports chained .use() and async .mount().
+ * Also implements Thenable so `await createApp(...)` auto-calls mount().
+ */
+export interface AppBuilder {
+  /** Register a new-style plugin. Chainable. Throws after mount() is called. */
+  use(plugin: LiteForgePlugin): AppBuilder;
+  /** Bootstrap and mount the application. Returns the AppInstance. */
+  mount(): Promise<AppInstance>;
+  /**
+   * Thenable — delegates to mount() so `await createApp(...)` still works
+   * without an explicit `.mount()` call (backward compat).
+   */
+  then<TResult1 = AppInstance, TResult2 = never>(
+    onfulfilled?: ((value: AppInstance) => TResult1 | PromiseLike<TResult1>) | null,
+    onrejected?: ((reason: unknown) => TResult2 | PromiseLike<TResult2>) | null,
+  ): Promise<TResult1 | TResult2>;
+  /** Delegates to mount().catch() for promise-style error handling. */
+  catch<TResult = never>(
+    onrejected?: ((reason: unknown) => TResult | PromiseLike<TResult>) | null,
+  ): Promise<AppInstance | TResult>;
+}
+
 /**
  * The use() function type for accessing context.
  */
-export type UseFn = <T = unknown>(key: string) => T;
+export type UseFn = {
+  <K extends keyof PluginRegistry>(key: K): PluginRegistry[K];
+  <T = unknown>(key: string): T;
+};
 
 /**
  * Context values stored at app/component level.
@@ -328,53 +398,30 @@ export interface RouterLike {
 }
 
 /**
- * Plugin definition for extending app functionality.
- */
-export interface Plugin {
-  /** Plugin name (for identification/logging) */
-  name: string;
-  
-  /** Called before stores are initialized */
-  beforeInit?: (app: { context: Record<string, unknown> }) => void | Promise<void>;
-  
-  /** Called after everything is mounted */
-  afterMount?: (app: AppInstance) => void | Promise<void>;
-  
-  /** Called before unmount */
-  beforeUnmount?: (app: AppInstance) => void;
-  
-  /** Context values this plugin provides */
-  provide?: Record<string, unknown>;
-}
-
-/**
  * App configuration passed to createApp().
  */
 export interface AppConfig {
   /** Root component to render */
   root: ComponentFactory<object> | (() => Node);
-  
+
   /** Target element or CSS selector */
   target: string | HTMLElement;
-  
+
   /** Router instance (optional) */
   router?: RouterLike;
-  
+
   /** Stores to register and initialize */
   stores?: AnyStore[];
-  
+
   /** Custom context values available via use() */
   context?: ContextValues;
-  
-  /** Plugins that extend the app lifecycle */
-  plugins?: Plugin[];
-  
+
   /** Debug mode: $lf on window, logging (default: auto-detect via import.meta.env?.DEV) */
   debug?: boolean;
-  
+
   /** Callback when app is successfully mounted */
   onReady?: (app: AppInstance) => void;
-  
+
   /** Callback when an error occurs during bootstrap */
   onError?: (error: Error) => void;
 }
@@ -440,43 +487,46 @@ export interface ShowProps<T> {
 
 /**
  * Props for the For component with generic type inference.
- * 
+ *
  * @typeParam T - The item type, inferred from the `each` array.
- * 
- * Note: children receives GETTERS for item and index, enabling signal-backed
- * updates when items reorder without re-running the render function.
- * 
+ *
+ * The Vite plugin automatically transforms `each` into a getter and rewrites
+ * item property accesses in the `children` body into reactive getter calls.
+ * Write plain code — the compiler handles reactivity.
+ *
  * @example
  * ```ts
  * For({
- *   each: () => users(),           // () => User[]
- *   key: 'id',                      // keyof User - TypeScript validates this
- *   children: (user, index) => (   // user() returns User, index() returns number
- *     <li>{() => `${index()}: ${user().name}`}</li>
+ *   each: users(),             // T[] — plain array, compiler wraps it
+ *   key: 'id',
+ *   children: (user, index) => (
+ *     <li>{user.name}</li>     // user.name — compiler makes it reactive
  *   ),
  * })
  * ```
  */
 export interface ForProps<T> {
-  /** 
-   * Reactive array source. Can be a signal, getter, or static array.
+  /**
+   * Array source. Pass a plain array or signal value — the compiler wraps it
+   * in a getter for reactive re-rendering automatically.
    */
-  each: (() => ReadonlyArray<T>) | (() => T[]) | ReadonlyArray<T> | T[];
-  
-  /** 
+  each: ReadonlyArray<T> | T[];
+
+  /**
    * Key extractor for reconciliation. Can be:
    * - A property name of T (validated by TypeScript)
    * - A function that extracts a key from an item
    */
   key?: keyof T | ((item: T, index: number) => string | number);
-  
-  /** 
-   * Render function for each item.
-   * @param item - Getter for the current item value (updates when item data changes)
-   * @param index - Getter for the current index (updates when item moves)
+
+  /**
+   * Render function for each item. Write plain property accesses —
+   * the compiler transforms them into reactive getter calls automatically.
+   * @param item - The current item value
+   * @param index - The current index
    */
-  children: (item: () => T, index: () => number) => Node;
-  
+  children: (item: T, index: number) => Node;
+
   /** Rendered when the array is empty */
   fallback?: () => Node;
 }

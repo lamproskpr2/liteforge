@@ -30,7 +30,10 @@ export type {
   // App types
   AppConfig,
   AppInstance,
-  Plugin,
+  AppBuilder,
+  LiteForgePlugin,
+  PluginContext,
+  PluginRegistry,
   AnyStore,
   RouterLike,
   // Control flow types
@@ -62,7 +65,7 @@ export {
 } from './context.js';
 
 // Component
-export { createComponent, isComponentFactory } from './component.js';
+export { createComponent, isComponentFactory, onSetupCleanup } from './component.js';
 
 // App
 export { createApp } from './app.js';

@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { signal } from '@liteforge/core';
 import { createApp, createComponent, clearContext } from '../src/index.js';
-import type { Plugin, AnyStore } from '../src/index.js';
+import type { AnyStore } from '../src/index.js';
 
 describe('createApp', () => {
   let container: HTMLElement;
@@ -367,111 +367,6 @@ describe('createApp', () => {
       });
 
       expect(order).toEqual(['a', 'b']);
-      app.unmount();
-    });
-  });
-
-  describe('plugins', () => {
-    it('should call plugin beforeInit hook', async () => {
-      let hookCalled = false;
-
-      const plugin: Plugin = {
-        name: 'test',
-        beforeInit: () => { hookCalled = true; },
-      };
-
-      const app = await createApp({
-        root: () => document.createElement('div'),
-        target: container,
-        plugins: [plugin],
-      });
-
-      expect(hookCalled).toBe(true);
-      app.unmount();
-    });
-
-    it('should call plugin afterMount hook', async () => {
-      let hookCalled = false;
-      let receivedApp: unknown;
-
-      const plugin: Plugin = {
-        name: 'test',
-        afterMount: (app) => {
-          hookCalled = true;
-          receivedApp = app;
-        },
-      };
-
-      const app = await createApp({
-        root: () => document.createElement('div'),
-        target: container,
-        plugins: [plugin],
-      });
-
-      expect(hookCalled).toBe(true);
-      expect(receivedApp).toBe(app);
-      app.unmount();
-    });
-
-    it('should call plugin beforeUnmount hook', async () => {
-      let hookCalled = false;
-
-      const plugin: Plugin = {
-        name: 'test',
-        beforeUnmount: () => { hookCalled = true; },
-      };
-
-      const app = await createApp({
-        root: () => document.createElement('div'),
-        target: container,
-        plugins: [plugin],
-      });
-
-      expect(hookCalled).toBe(false);
-      app.unmount();
-      expect(hookCalled).toBe(true);
-    });
-
-    it('should merge plugin provide into context', async () => {
-      const plugin: Plugin = {
-        name: 'toast',
-        provide: { toast: { show: () => {} } },
-      };
-
-      const app = await createApp({
-        root: () => document.createElement('div'),
-        target: container,
-        plugins: [plugin],
-      });
-
-      expect(app.use('toast')).toBeDefined();
-      app.unmount();
-    });
-
-    it('should await async plugin hooks', async () => {
-      let initDone = false;
-      let mountDone = false;
-
-      const plugin: Plugin = {
-        name: 'async-plugin',
-        beforeInit: async () => {
-          await new Promise(r => setTimeout(r, 10));
-          initDone = true;
-        },
-        afterMount: async () => {
-          await new Promise(r => setTimeout(r, 10));
-          mountDone = true;
-        },
-      };
-
-      const app = await createApp({
-        root: () => document.createElement('div'),
-        target: container,
-        plugins: [plugin],
-      });
-
-      expect(initDone).toBe(true);
-      expect(mountDone).toBe(true);
       app.unmount();
     });
   });

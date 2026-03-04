@@ -37,6 +37,18 @@ import { registerComponent, getLatestDefinition } from './hmr.js';
 // Track parent component for debug hierarchy
 let currentParentComponentId: string | undefined;
 
+// Setup-scope cleanup registry — populated during setup(), drained on unmount()
+let currentSetupCleanups: (() => void)[] | null = null;
+
+/**
+ * Register a cleanup function to run when the current component is destroyed.
+ * Must be called synchronously during `setup()`.
+ * Outside of setup(), this is a no-op.
+ */
+export function onSetupCleanup(fn: () => void): void {
+  currentSetupCleanups?.push(fn);
+}
+
 // Check if we're in development mode
 const isDev = typeof import.meta !== 'undefined' && import.meta.env?.DEV === true;
 
@@ -161,6 +173,7 @@ function createComponentInstance<
   let setupResult: S | undefined;
   let loadedData: D | undefined;
   let mountedCleanup: (() => void) | void;
+  const setupCleanups: (() => void)[] = [];
   const hasProvide = Boolean(definition.provide);
   let provideContext: Record<string, unknown> | undefined;
 
@@ -175,7 +188,10 @@ function createComponentInstance<
   // Phase 1: Setup (synchronous)
   // ========================================
   if (currentDefinition.setup) {
+    const prevCleanups = currentSetupCleanups;
+    currentSetupCleanups = setupCleanups;
     setupResult = currentDefinition.setup({ props, use });
+    currentSetupCleanups = prevCleanups;
   }
 
   // ========================================
@@ -234,6 +250,12 @@ function createComponentInstance<
     if (currentDefinition.destroyed) {
       currentDefinition.destroyed({ props, setup: setupResult as S });
     }
+
+    // Run setup-scope cleanups (registered via onSetupCleanup during setup())
+    for (let i = setupCleanups.length - 1; i >= 0; i--) {
+      try { setupCleanups[i]!(); } catch { /* ignore */ }
+    }
+    setupCleanups.length = 0;
 
     // Run mounted cleanup
     if (mountedCleanup) {

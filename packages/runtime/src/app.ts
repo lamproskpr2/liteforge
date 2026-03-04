@@ -3,18 +3,26 @@
  *
  * Central app bootstrap: mounts root component, initializes stores,
  * sets up context, router, plugins, and debug utilities.
+ *
+ * Returns an AppBuilder that supports chained .use(plugin).mount().
+ * The AppBuilder is also a Thenable, so `await createApp(...)` works
+ * without an explicit .mount() call (backward compat).
  */
 
 import type {
   AppConfig,
   AppInstance,
+  AppBuilder,
+  LiteForgePlugin,
   ComponentInstance,
   ComponentFactoryInternal,
   AnyStore,
 } from './types.js';
+
 import { initAppContext, clearContext, use } from './context.js';
 import { isComponentFactory } from './component.js';
 import { getHMRHandler } from './hmr.js';
+import { createPluginContext } from './plugin-registry.js';
 
 // ============================================================================
 // Debug Utilities Type
@@ -29,50 +37,90 @@ interface DebugUtilities {
 }
 
 // ============================================================================
-// createApp Implementation
+// createApp — returns AppBuilder
 // ============================================================================
 
 /**
  * Create and bootstrap a LiteForge application.
  *
- * This is an async function that:
- * 1. Resolves the target element
- * 2. Builds the app context (custom context + router + stores)
- * 3. Runs plugin beforeInit hooks
- * 4. Initializes stores (calls initialize() if present)
- * 5. Starts the router (if present)
- * 6. Mounts the root component
- * 7. Runs plugin afterMount hooks
- * 8. Sets up debug utilities (if debug mode)
- * 9. Calls onReady callback
- *
- * @param config - Application configuration
- * @returns Promise resolving to the app instance
+ * Returns an AppBuilder with:
+ * - `.use(plugin)` — register a new-style LiteForgePlugin (chainable)
+ * - `.mount()` — async, performs full bootstrap
+ * - `.then()` — Thenable for `await createApp(...)` backward compat
  *
  * @example
  * ```ts
- * const app = await createApp({
- *   root: App,
- *   target: '#app',
- *   router: createAppRouter(),
- *   stores: [authStore, uiStore],
- *   context: { api: createApiClient() },
- *   debug: true,
- * });
+ * // New pattern:
+ * const app = await createApp({ root: App, target: '#app' })
+ *   .use(routerPlugin(options))
+ *   .use(modalPlugin())
+ *   .mount();
+ *
+ * // Old pattern (still works):
+ * const app = await createApp({ root: App, target: '#app', plugins: [devtoolsPlugin()] });
  * ```
  */
-export async function createApp(config: AppConfig): Promise<AppInstance> {
+export function createApp(config: AppConfig): AppBuilder {
+  const newStylePlugins: LiteForgePlugin[] = [];
+  let mountCalled = false;
+
+  const builder: AppBuilder = {
+    use(plugin: LiteForgePlugin): AppBuilder {
+      if (mountCalled) {
+        throw new Error(
+          `[LiteForge] Cannot call .use() after .mount() — plugin "${plugin.name}" added too late.`,
+        );
+      }
+      newStylePlugins.push(plugin);
+      return builder;
+    },
+
+    mount(): Promise<AppInstance> {
+      if (mountCalled) {
+        throw new Error('[LiteForge] .mount() has already been called.');
+      }
+      mountCalled = true;
+      return installAndMount(config, newStylePlugins);
+    },
+
+    then<TResult1 = AppInstance, TResult2 = never>(
+      onfulfilled?: ((value: AppInstance) => TResult1 | PromiseLike<TResult1>) | null,
+      onrejected?: ((reason: unknown) => TResult2 | PromiseLike<TResult2>) | null,
+    ): Promise<TResult1 | TResult2> {
+      return builder.mount().then(onfulfilled, onrejected);
+    },
+
+    catch<TResult = never>(
+      onrejected?: ((reason: unknown) => TResult | PromiseLike<TResult>) | null,
+    ): Promise<AppInstance | TResult> {
+      return builder.mount().catch(onrejected);
+    },
+  };
+
+  return builder;
+}
+
+// ============================================================================
+// installAndMount — the full bootstrap logic
+// ============================================================================
+
+async function installAndMount(
+  config: AppConfig,
+  newStylePlugins: LiteForgePlugin[],
+): Promise<AppInstance> {
   let rootInstance: ComponentInstance | null = null;
   let rootNode: Node | null = null;
   let targetElement: HTMLElement | null = null;
   let isMounted = false;
   const appContext: Record<string, unknown> = {};
   const storesMap: Record<string, AnyStore> = {};
+  const pluginCleanups: Array<() => void> = [];
 
-  // Determine debug mode (auto-detect from Vite's import.meta.env.DEV)
-  const isDebug = config.debug ?? 
-    (typeof globalThis !== 'undefined' && 
-     (globalThis as { __DEV__?: boolean }).__DEV__ === true);
+  // Determine debug mode
+  const isDebug =
+    config.debug ??
+    (typeof globalThis !== 'undefined' &&
+      (globalThis as { __DEV__?: boolean }).__DEV__ === true);
 
   try {
     // ========================================
@@ -90,7 +138,7 @@ export async function createApp(config: AppConfig): Promise<AppInstance> {
     // ========================================
     // 2. Build app context
     // ========================================
-    
+
     // 2a. Custom context values
     if (config.context) {
       Object.assign(appContext, config.context);
@@ -98,44 +146,59 @@ export async function createApp(config: AppConfig): Promise<AppInstance> {
 
     // 2b. Router
     if (config.router) {
-      appContext.router = config.router;
+      appContext['router'] = config.router;
     }
 
-    // 2c. Stores - register under $name and with store: prefix
+    // 2c. Stores
     if (config.stores) {
       for (const store of config.stores) {
         storesMap[store.$name] = store;
         appContext[`store:${store.$name}`] = store;
-        // Also register directly by name for convenience
         appContext[store.$name] = store;
       }
     }
 
-    // 2d. Plugin provide values
-    if (config.plugins) {
-      for (const plugin of config.plugins) {
-        if (plugin.provide) {
-          Object.assign(appContext, plugin.provide);
+    // ========================================
+    // 3. Duplicate-check all plugin names BEFORE any install()
+    // ========================================
+    const seenNames = new Set<string>();
+    for (const plugin of newStylePlugins) {
+      if (seenNames.has(plugin.name)) {
+        throw new Error(
+          `[LiteForge] Duplicate plugin name: "${plugin.name}". Each plugin must have a unique name.`,
+        );
+      }
+      seenNames.add(plugin.name);
+    }
+
+    // ========================================
+    // 4. LiteForgePlugin install()
+    //    On failure: run collected cleanups in reverse, then re-throw.
+    // ========================================
+    const pluginCtx = createPluginContext(targetElement, appContext);
+
+    for (const plugin of newStylePlugins) {
+      try {
+        const cleanup = plugin.install(pluginCtx);
+        if (typeof cleanup === 'function') {
+          pluginCleanups.push(cleanup);
         }
+      } catch (err) {
+        // Run cleanups for already-installed plugins in reverse
+        for (let i = pluginCleanups.length - 1; i >= 0; i--) {
+          try { pluginCleanups[i]!(); } catch { /* ignore cleanup errors */ }
+        }
+        throw err;
       }
     }
 
     // ========================================
-    // 3. Plugin beforeInit hooks
+    // 6. Initialize app-level context
     // ========================================
-    if (config.plugins) {
-      for (const plugin of config.plugins) {
-        if (plugin.beforeInit) {
-          await plugin.beforeInit({ context: appContext });
-        }
-      }
-    }
-
-    // Initialize app-level context (makes use() work)
     initAppContext(appContext);
 
     // ========================================
-    // 4. Initialize stores
+    // 7. Initialize stores
     // ========================================
     if (config.stores) {
       for (const store of config.stores) {
@@ -149,9 +212,13 @@ export async function createApp(config: AppConfig): Promise<AppInstance> {
     }
 
     // ========================================
-    // 5. Start router
+    // 8. Start router
     // ========================================
-    if (config.router && 'start' in config.router && typeof config.router.start === 'function') {
+    if (
+      config.router &&
+      'start' in config.router &&
+      typeof config.router.start === 'function'
+    ) {
       if (isDebug) {
         console.log('[LiteForge] Starting router...');
       }
@@ -159,16 +226,14 @@ export async function createApp(config: AppConfig): Promise<AppInstance> {
     }
 
     // ========================================
-    // 6. Mount root component
+    // 9. Mount root component
     // ========================================
     const rootConfig = config.root;
-    
+
     if (isComponentFactory(rootConfig)) {
-      // It's a ComponentFactory from createComponent()
       rootInstance = (rootConfig as unknown as ComponentFactoryInternal)({});
       rootInstance.mount(targetElement);
     } else {
-      // It's a simple render function () => Node
       rootNode = (rootConfig as () => Node)();
       targetElement.appendChild(rootNode);
     }
@@ -176,29 +241,19 @@ export async function createApp(config: AppConfig): Promise<AppInstance> {
     isMounted = true;
 
     // ========================================
-    // 7. Plugin afterMount hooks
+    // 10. Build app instance
     // ========================================
-    // Create app instance first so plugins can use it
-    // Note: We build the object conditionally to satisfy exactOptionalPropertyTypes
     const app: AppInstance = Object.assign(
       {
         unmount,
         use: createAppUse(appContext),
         stores: storesMap,
       },
-      config.router ? { router: config.router } : {}
+      config.router ? { router: config.router } : {},
     );
 
-    if (config.plugins) {
-      for (const plugin of config.plugins) {
-        if (plugin.afterMount) {
-          await plugin.afterMount(app);
-        }
-      }
-    }
-
     // ========================================
-    // 8. Debug utilities
+    // 11. Debug utilities
     // ========================================
     if (isDebug && typeof window !== 'undefined') {
       const debugUtils: DebugUtilities = {
@@ -232,14 +287,12 @@ export async function createApp(config: AppConfig): Promise<AppInstance> {
     }
 
     // ========================================
-    // 8b. HMR support
+    // 12b. HMR support
     // ========================================
     const hmrHandler = getHMRHandler();
     if (hmrHandler) {
       hmrHandler.fullRerender = () => {
         console.log('[LiteForge HMR] 🔄 Full app re-render (stores + router preserved)');
-        // Set cooldown immediately to block any HMR updates triggered by
-        // module re-evaluation during the synchronous remount cycle
         if (typeof window !== 'undefined') {
           if (window.__LITEFORGE_HMR_COOLDOWN__ !== undefined) {
             clearTimeout(window.__LITEFORGE_HMR_COOLDOWN__);
@@ -249,11 +302,9 @@ export async function createApp(config: AppConfig): Promise<AppInstance> {
           }, 200);
         }
 
-        // Preserve scroll position across the re-render
         const scrollX = window.scrollX;
         const scrollY = window.scrollY;
 
-        // Unmount current root
         if (rootInstance) {
           rootInstance.unmount();
           rootInstance = null;
@@ -263,8 +314,6 @@ export async function createApp(config: AppConfig): Promise<AppInstance> {
           rootNode = null;
         }
 
-        // Re-mount root component — all factories read latest definitions
-        // from the component registry (updated by createComponent on re-eval)
         if (targetElement) {
           if (isComponentFactory(config.root)) {
             rootInstance = (config.root as unknown as ComponentFactoryInternal)({});
@@ -275,54 +324,38 @@ export async function createApp(config: AppConfig): Promise<AppInstance> {
           }
         }
 
-        // Restore scroll after DOM settles
         requestAnimationFrame(() => { window.scrollTo(scrollX, scrollY); });
       };
     }
 
     // ========================================
-    // 9. onReady callback
+    // 13. onReady callback
     // ========================================
     if (config.onReady) {
       config.onReady(app);
     }
 
     return app;
-
   } catch (error) {
-    // Handle bootstrap errors
     const err = error instanceof Error ? error : new Error(String(error));
-    
+
     if (config.onError) {
       config.onError(err);
     }
-    
-    // Re-throw so the promise rejects
+
     throw err;
   }
 
-  // ========================================
+  // ============================================================================
   // Internal Functions
-  // ========================================
+  // ============================================================================
 
   function unmount(): void {
     if (!isMounted) return;
 
-    // Plugin beforeUnmount hooks
-    if (config.plugins) {
-      for (const plugin of config.plugins) {
-        if (plugin.beforeUnmount) {
-          const appForPlugin: AppInstance = Object.assign(
-            {
-              unmount,
-              use: createAppUse(appContext),
-              stores: storesMap,
-            },
-            config.router ? { router: config.router } : {}
-          );
-          plugin.beforeUnmount(appForPlugin);
-        }
-      }
+    // Plugin cleanups in REVERSE order
+    for (let i = pluginCleanups.length - 1; i >= 0; i--) {
+      try { pluginCleanups[i]!(); } catch { /* ignore cleanup errors */ }
     }
 
     // Unmount root component
@@ -331,19 +364,21 @@ export async function createApp(config: AppConfig): Promise<AppInstance> {
       rootInstance = null;
     }
 
-    // Remove simple render function node
     if (rootNode && rootNode.parentNode) {
       rootNode.parentNode.removeChild(rootNode);
       rootNode = null;
     }
 
-    // Clear target element
     if (targetElement) {
       targetElement.innerHTML = '';
     }
 
     // Stop router
-    if (config.router && 'stop' in config.router && typeof config.router.stop === 'function') {
+    if (
+      config.router &&
+      'stop' in config.router &&
+      typeof config.router.stop === 'function'
+    ) {
       config.router.stop();
     }
 
@@ -352,23 +387,20 @@ export async function createApp(config: AppConfig): Promise<AppInstance> {
       delete (window as unknown as Record<string, unknown>).$lf;
     }
 
-    // Clear context
     clearContext();
-
     isMounted = false;
   }
 }
 
-/**
- * Create a bound use() function for the app instance.
- * This allows accessing context from outside components.
- */
+// ============================================================================
+// Helpers
+// ============================================================================
+
 function createAppUse(appContext: Record<string, unknown>) {
   return function appUse<T = unknown>(key: string): T {
     if (key in appContext) {
       return appContext[key] as T;
     }
-    // Fall back to global use() which checks the context stack
     return use<T>(key);
   };
 }
