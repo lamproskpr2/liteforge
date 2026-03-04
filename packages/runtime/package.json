@@ -39,7 +39,7 @@
     "README.md",
     "LICENSE"
   ],
-  "sideEffects": false,
+  "sideEffects": true,
   "engines": {
     "node": ">=18"
   },
