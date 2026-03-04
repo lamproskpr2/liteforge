@@ -150,7 +150,7 @@ export {
   getActiveRouterOrNull,
 } from './router.js';
 
-export { useTitle } from './title.js';
+export { useTitle, hasTitleOverride } from './title.js';
 
 export type { RouterInternal } from './router.js';
 
@@ -198,3 +198,19 @@ export {
   getHistoryKey,
   embedScrollKey,
 } from './scroll.js';
+
+// =============================================================================
+// Plugin
+// =============================================================================
+
+export { routerPlugin } from './plugin.js';
+export { useParam } from './helpers.js';
+
+// Declaration Merging — augments @liteforge/runtime's PluginRegistry so that
+// use('router') returns Router without a cast whenever @liteforge/router is imported.
+import type { Router } from './types.js';
+declare module '@liteforge/runtime' {
+  interface PluginRegistry {
+    router: Router;
+  }
+}

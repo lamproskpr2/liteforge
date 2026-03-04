@@ -1,9 +1,18 @@
 import { signal, effect } from '@liteforge/core';
+import { use, hasContext, onSetupCleanup } from '@liteforge/runtime';
 import type { Router } from './types.js';
-import { getActiveRouter } from './router.js';
+import { getActiveRouterOrNull } from './router.js';
 
 // Module-level signal — shared between setupTitleEffect and useTitle
 const titleOverride = signal<(() => string) | null>(null);
+
+// True when a titleTemplate effect is active — useTitle defers to it
+let titleTemplateActive = false;
+
+/** Returns true if useTitle() has set an active override. */
+export function hasTitleOverride(): boolean {
+  return titleOverride() !== null;
+}
 
 /**
  * Called by createRouter when titleTemplate is provided.
@@ -13,7 +22,8 @@ export function setupTitleEffect(
   template: (title: string | undefined) => string,
   router: Router
 ): () => void {
-  return effect(() => {
+  titleTemplateActive = true;
+  const stop = effect(() => {
     const override = titleOverride();
     const matched = router.matched();
     const leaf = matched[matched.length - 1];
@@ -22,23 +32,56 @@ export function setupTitleEffect(
     const rawTitle = override !== null ? override() : metaTitle;
     document.title = template(rawTitle);
   });
+  return () => {
+    titleTemplateActive = false;
+    stop();
+  };
 }
 
 /**
  * Override document.title reactively from within a component.
- * Cleanup happens automatically on the next route navigation.
+ * Reverts to the route's meta.title (or clears) when the component is destroyed
+ * or when the next navigation fires — whichever comes first.
  */
 export function useTitle(title: string | (() => string)): void {
   const getter = typeof title === 'string' ? () => title : title;
   titleOverride.set(getter);
 
-  const router = getActiveRouter();
-  const removeHook = router.afterEach(() => {
-    // Only clear if this component's override is still active
-    // (prevents race: new page may have called useTitle() before old page navigates away)
+  const router = (hasContext('router') ? use<Router>('router') : null) ?? getActiveRouterOrNull();
+  if (!router) throw new Error('[useTitle] No router found. Make sure routerPlugin is installed.');
+
+  // When no titleTemplate is configured, manage document.title directly via effect
+  // so it stays reactive if a getter function is passed.
+  let stopEffect: (() => void) | undefined;
+  if (!titleTemplateActive) {
+    document.title = getter();
+    stopEffect = effect(() => {
+      const override = titleOverride();
+      if (override !== null) {
+        document.title = override();
+      }
+    });
+  }
+
+  function cleanup() {
+    stopEffect?.();
+    stopEffect = undefined;
     if (titleOverride() === getter) {
       titleOverride.set(null);
+      // Restore route meta.title when no titleTemplate is active
+      if (!titleTemplateActive) {
+        const matched = router.matched();
+        const leaf = matched[matched.length - 1];
+        const metaTitle = leaf?.route.meta?.['title'] as string | undefined;
+        if (metaTitle) document.title = metaTitle;
+      }
     }
-    removeHook(); // one-shot: remove after first navigation
-  });
+    removeHook();
+  }
+
+  // One-shot navigation hook — cleans up after leaving this route
+  const removeHook = router.afterEach(cleanup);
+
+  // Also clean up when the component is destroyed (HMR, conditional rendering, etc.)
+  onSetupCleanup(cleanup);
 }
