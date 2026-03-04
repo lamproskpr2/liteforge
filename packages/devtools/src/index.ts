@@ -19,6 +19,8 @@ export type {
   DevToolsConfig,
   ResolvedDevToolsConfig,
   DevToolsInstance,
+  DevToolsApi,
+  SignalGetter,
   PanelPosition,
   TabId,
   PanelState,

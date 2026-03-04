@@ -194,11 +194,37 @@ export interface PerformanceCounters {
 }
 
 // ============================================================================
+// DevTools Public API (exposed via PluginRegistry)
+// ============================================================================
+
+/**
+ * A getter function that reads a signal value.
+ * Matches the call signature of Signal<T> for reading.
+ */
+export type SignalGetter<T> = () => T;
+
+/**
+ * Public DevTools API — accessible via use('devtools') or app.use('devtools').
+ */
+export interface DevToolsApi {
+  /** Whether the panel is currently open */
+  isOpen: SignalGetter<boolean>;
+  /** Open the DevTools panel */
+  open(): void;
+  /** Close the DevTools panel */
+  close(): void;
+  /** Toggle the DevTools panel open/closed */
+  toggle(): void;
+  /** Switch to a specific tab */
+  selectTab(tab: TabId): void;
+}
+
+// ============================================================================
 // DevTools Instance
 // ============================================================================
 
 /**
- * DevTools instance returned by the plugin.
+ * DevTools instance returned by createDevTools() (standalone usage).
  */
 export interface DevToolsInstance {
   /** The debug bus */
