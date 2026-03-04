@@ -9,6 +9,7 @@
  */
 
 import { defineStore } from '@liteforge/store';
+import { hasTitleOverride } from '@liteforge/router';
 
 // =============================================================================
 // Types
@@ -102,7 +103,10 @@ export const uiStore = defineStore('ui', {
        */
       setPageTitle(title: string) {
         state.pageTitle.set(title);
-        document.title = `${title} | LiteForge Demo`;
+        // Don't overwrite document.title when a component has claimed it via useTitle()
+        if (!hasTitleOverride()) {
+          document.title = `${title} | LiteForge Demo`;
+        }
       },
 
       /**

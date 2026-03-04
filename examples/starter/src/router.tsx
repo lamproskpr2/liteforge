@@ -135,14 +135,14 @@ export const loggerMiddleware = defineMiddleware('logger', async (ctx, next) => 
 /**
  * Title middleware - updates document title based on route meta
  */
-export const titleMiddleware = defineMiddleware('title', async (ctx, next) => {
-  await next();
+// export const titleMiddleware = defineMiddleware('title', async (ctx, next) => {
+//   await next();
   
-  // Get title from route meta
-  const route = ctx.matched[ctx.matched.length - 1];
-  const title = (route?.route.meta?.title as string) ?? 'LiteForge Demo';
-  uiStore.setPageTitle(title);
-});
+//   // Get title from route meta
+//   const route = ctx.matched[ctx.matched.length - 1];
+//   const title = (route?.route.meta?.title as string) ?? 'LiteForge Demo';
+//   uiStore.setPageTitle(title);
+// });
 
 // =============================================================================
 // Routes
@@ -292,7 +292,7 @@ export function createAppRouter() {
   const router = createRouter({
     routes,
     history,
-    middleware: [loggerMiddleware, titleMiddleware],
+    middleware: [loggerMiddleware],
     // Global lazy loading configuration - applies to all inline lazy imports
     lazyDefaults,
   });

@@ -9,9 +9,7 @@
  */
 
 import { createComponent, Show, For } from '@liteforge/runtime';
-import { Link } from '@liteforge/router';
-import { createQuery } from '@liteforge/query';
-import type { Router } from '@liteforge/router';
+import { Link, useParam } from '@liteforge/router';
 
 // =============================================================================
 // Types
@@ -56,32 +54,28 @@ export const PostDetailPage = createComponent({
   name: 'PostDetailPage',
 
   setup({ use }) {
-    const router = use('router') as Router;
-    
-    // Get post ID from route params - this is reactive!
-    const getPostId = () => router.params().id as string;
+    const { createQuery } = use('query');
+    const postId = useParam('id');
 
-    // Create query with REACTIVE key - refetches when postId changes (object-style API)
     const postQuery = createQuery({
-      key: () => ['post', getPostId()],
-      fn: () => fetchPost(getPostId()),
-      staleTime: 60000, // 1 minute
+      key: () => ['post', postId()],
+      fn: () => fetchPost(postId()!),
+      staleTime: 60000,
       retry: 2,
     });
 
-    // Comments query - also reactive based on postId (object-style API)
     const commentsQuery = createQuery({
-      key: () => ['comments', getPostId()],
-      fn: () => fetchComments(getPostId()),
-      staleTime: 30000, // 30 seconds
+      key: () => ['comments', postId()],
+      fn: () => fetchComments(postId()!),
+      staleTime: 30000,
       retry: 1,
     });
 
-    return { router, getPostId, postQuery, commentsQuery };
+    return { postId, postQuery, commentsQuery };
   },
 
   component({ setup }) {
-    const { getPostId, postQuery, commentsQuery } = setup;
+    const { postId, postQuery, commentsQuery } = setup;
 
     return (
       <div class="post-detail-page">
@@ -94,14 +88,14 @@ export const PostDetailPage = createComponent({
 
         {/* Post ID Indicator (reactive) */}
         <div class="post-id-indicator">
-          {() => `Viewing Post #${getPostId()}`}
+          {() => `Viewing Post #${postId()}`}
         </div>
 
         {/* Main Content */}
         <div class="post-detail-content">
           {/* Loading State */}
           {Show({
-            when: () => postQuery.isLoading() && !postQuery.data(),
+            when: postQuery.isLoading() && !postQuery.data(),
             children: () => (
               <div class="loading-state">
                 <div class="loading-spinner" />
@@ -129,7 +123,7 @@ export const PostDetailPage = createComponent({
 
           {/* Post Content */}
           {Show({
-            when: () => !!postQuery.data(),
+            when: !!postQuery.data(),
             children: () => (
               <article class="post-article">
                 <h1 class="post-title">{() => postQuery.data()?.title ?? ''}</h1>
@@ -159,7 +153,7 @@ export const PostDetailPage = createComponent({
 
           {/* Comments Loading */}
           {Show({
-            when: () => commentsQuery.isLoading() && !commentsQuery.data(),
+            when: commentsQuery.isLoading() && !commentsQuery.data(),
             children: () => (
               <div class="loading-state small">
                 <p>Loading comments...</p>
@@ -169,12 +163,12 @@ export const PostDetailPage = createComponent({
 
           {/* Comments List */}
           {Show({
-            when: () => !!commentsQuery.data() && commentsQuery.data()!.length > 0,
+            when: !!commentsQuery.data() && commentsQuery.data()!.length > 0,
             children: () => (
               <div class="comments-list">
                 {For({
-                  each: () => commentsQuery.data() ?? [],
-                  children: (comment: Comment) => (
+                  each: commentsQuery.data() ?? [],
+                  children: (comment) => (
                     <div class="comment-card">
                       <div class="comment-header">
                         <strong class="comment-name">{comment.name}</strong>
@@ -190,7 +184,7 @@ export const PostDetailPage = createComponent({
 
           {/* No Comments State */}
           {Show({
-            when: () => commentsQuery.data() && commentsQuery.data()!.length === 0,
+            when: commentsQuery.data() && commentsQuery.data()!.length === 0,
             children: () => (
               <div class="empty-state">
                 <p>No comments yet.</p>
@@ -230,9 +224,4 @@ export const PostDetailPage = createComponent({
     );
   },
 
-  destroyed({ setup }) {
-    // Clean up queries when component unmounts
-    setup.postQuery.dispose();
-    setup.commentsQuery.dispose();
-  },
 });

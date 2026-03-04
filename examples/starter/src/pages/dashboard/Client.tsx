@@ -7,10 +7,9 @@
  */
 
 import { createComponent } from '@liteforge/runtime';
-import { createClient, ApiError } from '@liteforge/client';
+import { createClient, ApiError, useQueryClient } from '@liteforge/client';
 import type { RequestConfig, ResponseContext } from '@liteforge/client';
 import { signal } from '@liteforge/core';
-import { createQuery, createMutation } from '@liteforge/query';
 
 // ============================================================================
 // Types (JSONPlaceholder)
@@ -35,11 +34,14 @@ interface Todo {
 
 export const ClientPage = createComponent({
   name: 'ClientPage',
-  component() {
+
+  setup({ use }) {
+    const client = useQueryClient();
+    const { createQuery } = use('query');
 
     // -----------------------------------------------------------------------
-    // Section 1 — client WITHOUT query integration
-    //   Manually managing loading / error / data signals.
+    // Section 1 — bare client WITHOUT query integration
+    //   Separate instance with demo interceptors for logging.
     // -----------------------------------------------------------------------
     const bareClient = createClient({
       baseUrl: 'https://jsonplaceholder.typicode.com',
@@ -56,10 +58,9 @@ export const ClientPage = createComponent({
       },
     });
 
-    // Manual state — one set per endpoint
-    const todoData   = signal<Todo | null>(null);
+    const todoData    = signal<Todo | null>(null);
     const todoLoading = signal(false);
-    const todoError  = signal('');
+    const todoError   = signal('');
 
     async function fetchTodo() {
       todoError.set('');
@@ -74,31 +75,24 @@ export const ClientPage = createComponent({
     }
 
     // -----------------------------------------------------------------------
-    // Section 2 — client WITH @liteforge/query integration
-    //   Pass { query: { createQuery, createMutation } } to createClient.
-    //   Resources get .useList() / .useOne() / .useCreate() etc. automatically.
+    // Section 2 — plugin client WITH @liteforge/query integration
     // -----------------------------------------------------------------------
-    const client = createClient({
-      baseUrl: 'https://jsonplaceholder.typicode.com',
-      query: { createQuery, createMutation },
-    });
-
     const posts = client.resource<Post, Omit<Post, 'id'>>('posts');
-
-    // No loading/error/data signals needed — useOne manages all of it:
     const postQuery = posts.useOne(1);
     const createMut = posts.useCreate();
 
-    // Reactive paginated list — createQuery with reactive key re-fetches automatically on page change
     const page = signal(1);
     const listQuery = createQuery<Post[]>({
       key: () => ['posts', 'list', page()],
       fn: () => client.get<Post[]>('/posts', { params: { _limit: 3, _page: page() } }),
     });
 
-    // -----------------------------------------------------------------------
-    // Render
-    // -----------------------------------------------------------------------
+    return { bareClient, todoData, todoLoading, todoError, fetchTodo, posts, postQuery, createMut, page, listQuery };
+  },
+
+  component({ setup }) {
+    const { todoData, todoLoading, todoError, fetchTodo, postQuery, createMut, page, listQuery } = setup;
+
     return (
       <div class="client-page">
         <style>{`

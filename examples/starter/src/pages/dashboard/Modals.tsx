@@ -11,6 +11,7 @@
 import { createComponent } from '@liteforge/runtime';
 import { signal } from '@liteforge/core';
 import { createModal, confirm, alert, prompt } from '@liteforge/modal';
+import { useTitle } from '@liteforge/router'
 
 // =============================================================================
 // Modals Page Component
@@ -21,7 +22,7 @@ export const ModalsPage = createComponent({
 
   setup() {
     const lastResult = signal<string>('—');
-
+    useTitle('Modals Demo');
     // ── Basic modal ──────────────────────────────────────────────────────────
     const basicModal = createModal({
       config: { title: 'Basic Modal', size: 'md', closable: true },
@@ -65,6 +66,7 @@ export const ModalsPage = createComponent({
 
   component({ setup }) {
     const { lastResult, basicModal, lgModal, fullModal } = setup;
+    
 
     const handleConfirm = async () => {
       const result = await confirm('Are you sure you want to continue?', { title: 'Confirm Action' });
