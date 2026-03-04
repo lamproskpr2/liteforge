@@ -304,6 +304,134 @@ describe('control flow components', () => {
       expect(spans[0]?.dataset.id).toBe('2');
       expect(spans[1]?.dataset.id).toBe('1');
     });
+
+    it('swap rows: two non-adjacent nodes end up at correct positions', async () => {
+      interface Item { id: number }
+      const items = signal<Item[]>([
+        { id: 1 }, { id: 2 }, { id: 3 }, { id: 4 }, { id: 5 },
+      ]);
+
+      const node = For({
+        each: () => items(),
+        key: (item) => item.id,
+        children: (item) => {
+          const span = document.createElement('span');
+          span.dataset.id = String(item().id);
+          return span;
+        },
+      });
+
+      container.appendChild(node);
+      await tick();
+
+      // Swap rows 1 and 4 (index 0 and 3) — non-adjacent
+      items.set([
+        { id: 4 }, { id: 2 }, { id: 3 }, { id: 1 }, { id: 5 },
+      ]);
+      await tick();
+
+      const spans = container.querySelectorAll('span');
+      expect(spans[0]?.dataset.id).toBe('4');
+      expect(spans[1]?.dataset.id).toBe('2');
+      expect(spans[2]?.dataset.id).toBe('3');
+      expect(spans[3]?.dataset.id).toBe('1');
+      expect(spans[4]?.dataset.id).toBe('5');
+    });
+
+    it('swap rows: adjacent nodes swap correctly', async () => {
+      interface Item { id: number }
+      const items = signal<Item[]>([
+        { id: 1 }, { id: 2 }, { id: 3 },
+      ]);
+
+      const node = For({
+        each: () => items(),
+        key: (item) => item.id,
+        children: (item) => {
+          const span = document.createElement('span');
+          span.dataset.id = String(item().id);
+          return span;
+        },
+      });
+
+      container.appendChild(node);
+      await tick();
+
+      // Swap adjacent rows 1 and 2
+      items.set([{ id: 2 }, { id: 1 }, { id: 3 }]);
+      await tick();
+
+      const spans = container.querySelectorAll('span');
+      expect(spans[0]?.dataset.id).toBe('2');
+      expect(spans[1]?.dataset.id).toBe('1');
+      expect(spans[2]?.dataset.id).toBe('3');
+    });
+
+    it('swap rows: item signals still reactive after swap', async () => {
+      interface Item { id: number; label: string }
+      const items = signal<Item[]>([
+        { id: 1, label: 'A' }, { id: 2, label: 'B' }, { id: 3, label: 'C' },
+      ]);
+
+      const node = For({
+        each: () => items(),
+        key: (item) => item.id,
+        children: (item) => {
+          const span = document.createElement('span');
+          span.dataset.id = String(item().id);
+          span.textContent = item().label;
+          return span;
+        },
+      });
+
+      container.appendChild(node);
+      await tick();
+
+      // Swap rows 0 and 2
+      items.set([
+        { id: 3, label: 'C' }, { id: 2, label: 'B' }, { id: 1, label: 'A' },
+      ]);
+      await tick();
+
+      const spans = container.querySelectorAll('span');
+      expect(spans[0]?.textContent).toBe('C');
+      expect(spans[1]?.textContent).toBe('B');
+      expect(spans[2]?.textContent).toBe('A');
+    });
+
+    it('swap rows: no DOM nodes are created, only moved', async () => {
+      interface Item { id: number }
+      const items = signal<Item[]>([
+        { id: 1 }, { id: 2 }, { id: 3 }, { id: 4 },
+      ]);
+
+      const createdCount = { value: 0 };
+      const node = For({
+        each: () => items(),
+        key: (item) => item.id,
+        children: (item) => {
+          createdCount.value++;
+          const span = document.createElement('span');
+          span.dataset.id = String(item().id);
+          return span;
+        },
+      });
+
+      container.appendChild(node);
+      await tick();
+      expect(createdCount.value).toBe(4);
+
+      // Swap rows — should reuse existing nodes
+      items.set([{ id: 3 }, { id: 2 }, { id: 1 }, { id: 4 }]);
+      await tick();
+
+      // No new nodes created — same count
+      expect(createdCount.value).toBe(4);
+
+      const spans = container.querySelectorAll('span');
+      expect(spans[0]?.dataset.id).toBe('3');
+      expect(spans[3]?.dataset.id).toBe('4');
+    });
   });
 
   describe('Switch', () => {

@@ -206,6 +206,55 @@ interface MappedItem<T> {
 const isDev = typeof globalThis !== 'undefined' && (globalThis as Record<string, unknown>).__DEV__ !== false;
 
 /**
+ * Detect if two key arrays differ only by a single swap of two elements.
+ * Returns the two swapped indices, or null if it's not a simple swap.
+ */
+function detectSwap(oldKeys: unknown[], newKeys: unknown[]): [number, number] | null {
+  if (oldKeys.length !== newKeys.length) return null;
+
+  let diff1 = -1;
+  let diff2 = -1;
+  let diffCount = 0;
+
+  for (let i = 0; i < oldKeys.length; i++) {
+    if (oldKeys[i] !== newKeys[i]) {
+      if (diffCount === 0) diff1 = i;
+      else if (diffCount === 1) diff2 = i;
+      else return null; // more than 2 differences — not a swap
+      diffCount++;
+    }
+  }
+
+  if (diffCount !== 2) return null;
+  // Verify it's actually a swap (not two replacements)
+  if (oldKeys[diff1] !== newKeys[diff2] || oldKeys[diff2] !== newKeys[diff1]) return null;
+
+  return [diff1, diff2];
+}
+
+/**
+ * Swap two DOM nodes in place using minimal DOM operations.
+ * Handles adjacent nodes as a special case (2 ops instead of 3).
+ */
+function swapDomNodes(parent: Node, nodeA: Node, nodeB: Node): void {
+  const afterB = nodeB.nextSibling;
+
+  if (nodeA.nextSibling === nodeB) {
+    // Adjacent: A immediately before B — one insertBefore suffices
+    parent.insertBefore(nodeB, nodeA);
+  } else if (afterB === nodeA) {
+    // Adjacent: B immediately before A
+    parent.insertBefore(nodeA, nodeB);
+  } else {
+    // General case: use a placeholder comment to avoid double-insert
+    const placeholder = document.createComment('');
+    parent.insertBefore(placeholder, nodeA);
+    parent.insertBefore(nodeA, afterB);
+    parent.replaceChild(nodeB, placeholder);
+  }
+}
+
+/**
  * Render a list of items with keyed reconciliation.
  * 
  * When items reorder, DOM nodes are moved (not destroyed/recreated).
@@ -405,27 +454,44 @@ export function For<T>(config: ForConfig<T>): Node {
       }
     }
 
-    // REORDER: position nodes correctly
-    // Insert nodes in order, before the end marker
-    let insertBefore: Node = endMarker;
-    
-    // Process in reverse order so we can always insertBefore the previous node
+    // Build the old key order (before signal updates changed mappings)
+    // We need the previous DOM order to detect swaps
+    const oldKeys: unknown[] = [];
+    for (const key of mappings.keys()) {
+      oldKeys.push(key);
+    }
+
+    // SWAP FAST PATH: detect pure two-element swap — only 2-3 DOM ops
+    const noNewItems = newKeys.every(k => mappings.has(k));
+    const noRemovedItems = oldKeys.every(k => newMappings.has(k));
+    if (noNewItems && noRemovedItems && duplicateKeys.size === 0) {
+      const swap = detectSwap(oldKeys, newKeys);
+      if (swap !== null) {
+        const [i1, i2] = swap;
+        const keyA = newKeys[i1]!;
+        const keyB = newKeys[i2]!;
+        const nodeA = newMappings.get(keyA)!.node;
+        const nodeB = newMappings.get(keyB)!.node;
+        swapDomNodes(parentElement, nodeA, nodeB);
+        mappings = newMappings;
+        return;
+      }
+    }
+
+    // REORDER: general case — position nodes correctly using insertBefore.
+    // insertBefore on an already-attached node implicitly removes it first (1 op, not 2).
+    let insertBeforeNode: Node = endMarker;
+
     for (let i = newKeys.length - 1; i >= 0; i--) {
       const itemKey = newKeys[i]!;
       const mapping = newMappings.get(itemKey)!;
       const node = mapping.node;
-      
-      // Check if node needs to be moved
-      if (node.nextSibling !== insertBefore || node.parentNode !== parentElement) {
-        // Remove from current position if in DOM
-        if (node.parentNode) {
-          node.parentNode.removeChild(node);
-        }
-        // Insert before the reference node
-        parentElement.insertBefore(node, insertBefore);
+
+      if (node.nextSibling !== insertBeforeNode || node.parentNode !== parentElement) {
+        parentElement.insertBefore(node, insertBeforeNode);
       }
-      
-      insertBefore = node;
+
+      insertBeforeNode = node;
     }
 
     // Update state
