@@ -41,23 +41,28 @@ export function createTemplateVisitor(state: TemplateTransformState): Visitor {
   return {
     JSXElement(path: NodePath<t.JSXElement>) {
       state.hasJsx = true;
-      
-      // Analyze the element for template extraction
+
+      // Analyze the element for template extraction.
+      // analyzeElement walks the raw JSX AST, so it must run BEFORE any
+      // child JSX nodes are replaced (i.e. in enter phase).
       const analysis = analyzeElement(path.node);
-      
+
       if (analysis.shouldExtract) {
         // Use template extraction
         const compiled = compileTemplate(analysis, ++state.templateCounter);
-        
+
         // Add template declaration for hoisting
         state.templateDeclarations.push(compiled.templateDeclaration);
-        
+
         // Add required imports
         for (const imp of compiled.requiredImports) {
           state.templateImports.add(imp);
         }
-        
-        // Replace JSX with hydrated expression
+
+        // Replace JSX with hydrated expression.
+        // After replaceWith, Babel re-queues the new node for traversal,
+        // so any inner JSX inside expression containers (e.g. {items.map(i => <li/>)})
+        // will still be visited and transformed correctly.
         path.replaceWith(compiled.hydratedExpression);
       } else {
         // Fall back to h() calls for dynamic elements
@@ -69,7 +74,7 @@ export function createTemplateVisitor(state: TemplateTransformState): Visitor {
     JSXFragment(path: NodePath<t.JSXFragment>) {
       state.hasJsx = true;
       state.hasFragment = true;
-      
+
       // Fragments always use h() - no benefit from template extraction
       const hCall = transformJsxFragment(path.node);
       path.replaceWith(hCall);

@@ -20,11 +20,17 @@ export interface LiteForgePluginOptions {
   hmr?: boolean;
   /** Import source for h() and Fragment (default: '@liteforge/runtime') */
   importSource?: string;
-  /** 
-   * Enable template extraction optimization.
-   * - 'auto': enabled in production, disabled in development (default)
-   * - true: always enabled
-   * - false: always disabled
+  /**
+   * Enable template extraction optimization (default: true).
+   * Template extraction clones static HTML structures instead of calling
+   * createElement repeatedly — faster and produces the same output in dev and prod.
+   * Set to false only when debugging JSX transform issues.
+   *
+   * @example
+   * ```ts
+   * // Only disable for debugging transform issues:
+   * // templateExtraction: false,
+   * ```
    */
   templateExtraction?: boolean | 'auto';
 }

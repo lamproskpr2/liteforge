@@ -338,3 +338,52 @@ describe('H — Complex combination', () => {
     expect(out).toContain('<p>Footer</p>');
   });
 });
+
+// =============================================================================
+// I — Nested JSX in expression children (exit-phase regression)
+// =============================================================================
+
+describe('I — Nested JSX in expression children', () => {
+  it('correctly handles JSX inside a map callback child', () => {
+    const out = te(`
+      <div>
+        <p>Static</p>
+        {items.map((item) => <span>{item.name}</span>)}
+      </div>
+    `);
+    // Must produce valid JS — no raw JSX tags left in output
+    expect(out).not.toContain('<span>');
+    expect(out).not.toContain('</span>');
+    // The map child is inserted dynamically
+    expect(out).toContain('_insert');
+  });
+
+  it('outer template IIFE correct when inner JSX in child callback', () => {
+    const out = te(`
+      <div>
+        <h1>Title</h1>
+        {list.map(x => (<span class={x.cls}>{x.text}</span>))}
+      </div>
+    `);
+    // Template for outer div (h1 is a static child → shouldExtract)
+    expect(out).toContain('_template(');
+    // Output must not contain raw JSX tags
+    expect(out).not.toContain('<span');
+    // Inner span is transformed to h() or nested template
+    expect(out).toContain('h(');
+  });
+
+  it('does not leave raw JSX in deeply nested callback', () => {
+    const out = te(`
+      <section>
+        <h2>Header</h2>
+        <ul>
+          {items.map(i => <li key={i.id}>{i.label}</li>)}
+        </ul>
+      </section>
+    `);
+    // No raw JSX tags in output
+    expect(out).not.toContain('<li');
+    expect(out).not.toContain('</li>');
+  });
+});

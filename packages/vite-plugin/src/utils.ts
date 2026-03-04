@@ -17,7 +17,7 @@ const DEFAULT_OPTIONS: ResolvedPluginOptions = {
   extensions: ['.tsx', '.jsx'],
   hmr: true,
   importSource: '@liteforge/runtime',
-  templateExtraction: 'auto',
+  templateExtraction: true,
 };
 
 /**
