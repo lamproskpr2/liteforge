@@ -1,5 +1,4 @@
 import { defineStore } from 'liteforge/store';
-import { signal } from 'liteforge';
 
 export const uiStore = defineStore('ui', {
   state: {
