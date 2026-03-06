@@ -82,6 +82,7 @@ export function renderWeekView<T extends CalendarEvent>(
 
   // Day headers - will be populated reactively
   const dayHeaders = document.createElement('div')
+  dayHeaders.className = 'lf-cal-header-days'
   dayHeaders.style.display = 'flex'
   dayHeaders.style.flex = '1'
   header.appendChild(dayHeaders)
@@ -104,6 +105,15 @@ export function renderWeekView<T extends CalendarEvent>(
   body.appendChild(grid)
 
   container.appendChild(body)
+
+  // Sync scrollbar gutter: once body is in the DOM, measure scrollbar width and set as CSS var
+  // so allday-row and header-days can compensate with padding-right
+  const syncScrollbarGutter = () => {
+    const sbWidth = body.offsetWidth - body.clientWidth
+    if (sbWidth > 0) {
+      container.style.setProperty('--lf-cal-scrollbar-width', `${sbWidth}px`)
+    }
+  }
 
   // Now indicator reference
   let nowIndicator: (HTMLDivElement & { cleanup?: () => void }) | null = null
@@ -512,6 +522,9 @@ export function renderWeekView<T extends CalendarEvent>(
     }
     originalRemove()
   }
+
+  // Measure scrollbar width after first paint and set CSS var for header/allday alignment
+  setTimeout(syncScrollbarGutter, 0)
 
   return container
 }

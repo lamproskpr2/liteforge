@@ -182,6 +182,10 @@
   border-right: 1px solid var(--lf-cal-border);
 }
 
+.lf-cal-header-days {
+  padding-right: var(--lf-cal-scrollbar-width, 0px);
+}
+
 .lf-cal-header-cell {
   flex: 1;
   padding: 8px 4px;
@@ -239,6 +243,7 @@
 .lf-cal-allday-cells {
   flex: 1;
   display: flex;
+  padding-right: var(--lf-cal-scrollbar-width, 0px);
 }
 
 .lf-cal-allday-cell {
@@ -272,7 +277,7 @@
 
 .lf-cal-body {
   display: flex;
-  overflow-y: auto;
+  overflow-y: scroll;
   max-height: 600px;
 }
 
@@ -291,6 +296,11 @@
   line-height: 1;
   position: relative;
   top: -6px;
+}
+
+.lf-cal-time-label:first-child {
+  top: 0;
+  padding-top: 2px;
 }
 
 .lf-cal-grid {

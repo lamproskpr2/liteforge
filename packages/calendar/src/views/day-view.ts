@@ -90,6 +90,7 @@ export function renderDayView<T extends CalendarEvent>(
 
   // Resource/day headers container
   const headersContainer = document.createElement('div')
+  headersContainer.className = 'lf-cal-header-days'
   headersContainer.style.display = 'flex'
   headersContainer.style.flex = '1'
   header.appendChild(headersContainer)
@@ -111,6 +112,14 @@ export function renderDayView<T extends CalendarEvent>(
   body.appendChild(grid)
 
   container.appendChild(body)
+
+  // Sync scrollbar gutter: measure body scrollbar width and apply as padding-right on header/allday
+  const syncScrollbarGutter = () => {
+    const sbWidth = body.offsetWidth - body.clientWidth
+    if (sbWidth > 0) {
+      container.style.setProperty('--lf-cal-scrollbar-width', `${sbWidth}px`)
+    }
+  }
 
   // Now indicator reference
   let nowIndicator: (HTMLDivElement & { cleanup?: () => void }) | null = null
@@ -588,6 +597,9 @@ export function renderDayView<T extends CalendarEvent>(
     }
     originalRemove()
   }
+
+  // Measure scrollbar width after first paint and set CSS var for header/allday alignment
+  setTimeout(syncScrollbarGutter, 0)
 
   return container
 }
