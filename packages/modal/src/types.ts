@@ -35,7 +35,14 @@ export interface ModalConfig {
   onClose?: () => void;
 }
 
-export interface CreateModalOptions {
+// Overload 1: with data — component receives data
+export interface CreateModalOptions<TData> {
+  config?: ModalConfig;
+  component: (data: TData) => Node;
+}
+
+// Overload 2: without data — component takes no arguments (backwards compat)
+export interface CreateModalOptionsNoData {
   config?: ModalConfig;
   component: () => Node;
 }
@@ -43,7 +50,17 @@ export interface CreateModalOptions {
 /** @deprecated Use CreateModalOptions object form instead */
 export type ModalOptions = ModalConfig;
 
-export interface ModalResult {
+// Result with data: open(data) required
+export interface ModalResult<TData> {
+  isOpen: Signal<boolean>;
+  open: (data: TData) => void;
+  close: () => void;
+  toggle: () => void;
+  destroy: () => void;
+}
+
+// Result without data: open() with no args (backwards compat)
+export interface ModalResultNoData {
   isOpen: Signal<boolean>;
   open: () => void;
   close: () => void;

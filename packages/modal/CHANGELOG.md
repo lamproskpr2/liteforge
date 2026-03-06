@@ -1,5 +1,16 @@
 # @liteforge/modal
 
+## 3.1.0
+
+### Minor Changes
+
+- Add typed `createModal<TData>` overload — `open(data)` now passes data to the component function, enabling modals that receive dynamic content without global state. Backwards-compatible: existing no-data usage (`open()`) continues to work unchanged via the `CreateModalOptionsNoData` / `ModalResultNoData` overload.
+
+### Patch Changes
+
+- Updated dependencies
+  - @liteforge/runtime@0.6.1
+
 ## 3.0.0
 
 ### Patch Changes

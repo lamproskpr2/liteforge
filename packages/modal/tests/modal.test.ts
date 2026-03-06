@@ -99,6 +99,57 @@ describe('createModal', () => {
   });
 });
 
+// ─── createModal<TData> — typed open(data) ─────────────────
+
+describe('createModal<TData>', () => {
+  it('passes data to component on open(data)', () => {
+    let receivedData: { name: string } | undefined;
+    const modal = createModal<{ name: string }>({
+      component: (data) => {
+        receivedData = data;
+        return document.createElement('div');
+      },
+    });
+
+    // Mount provider so contentFn is invoked
+    const provider = ModalProvider();
+    document.body.appendChild(provider);
+
+    modal.open({ name: 'Alice' });
+
+    expect(modal.isOpen()).toBe(true);
+    expect(receivedData?.name).toBe('Alice');
+  });
+
+  it('open(data) stores data in registry entry contentFn closure', () => {
+    const received: string[] = [];
+    const modal = createModal<{ label: string }>({
+      component: (data) => {
+        received.push(data.label);
+        return document.createElement('div');
+      },
+    });
+
+    // Invoke contentFn manually via registry entry (as ModalProvider would)
+    const entry = [...modalRegistry][0]!;
+
+    modal.open({ label: 'first' });
+    entry.contentFn(); // first call builds content node
+
+    modal.close();
+    modal.open({ label: 'second' });
+    entry.contentFn(); // contentNode was reset — calls component again
+
+    expect(received).toEqual(['first', 'second']);
+  });
+
+  it('no-data overload still works with open()', () => {
+    const modal = createModal({ component: () => document.createElement('div') });
+    modal.open();
+    expect(modal.isOpen()).toBe(true);
+  });
+});
+
 // ─── ModalProvider ─────────────────────────────────────────
 
 describe('ModalProvider', () => {

@@ -1,5 +1,11 @@
 import { signal } from '@liteforge/core';
-import type { ModalConfig, CreateModalOptions, ModalResult } from './types.js';
+import type {
+  ModalConfig,
+  CreateModalOptions,
+  CreateModalOptionsNoData,
+  ModalResult,
+  ModalResultNoData,
+} from './types.js';
 
 // ─── Modal Registry ─────────────────────────────────────────
 
@@ -8,7 +14,8 @@ export interface ModalEntry {
   options: Required<ModalConfig>;
   contentFn: () => Node;
   isOpen: ReturnType<typeof signal<boolean>>;
-  open: () => void;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  open: (data?: any) => void;
   close: () => void;
   toggle: () => void;
   destroy: () => void;
@@ -70,9 +77,18 @@ function ensureEscListener(): void {
 
 // ─── createModal ─────────────────────────────────────────────
 
-export function createModal(opts: CreateModalOptions): ModalResult {
+// Overload 1: without data — open() with no args (backwards compat)
+export function createModal(opts: CreateModalOptionsNoData): ModalResultNoData;
+// Overload 2: with data — open(data) required, component receives data
+export function createModal<TData>(opts: CreateModalOptions<TData>): ModalResult<TData>;
+
+// Implementation
+export function createModal<TData = never>(
+  opts: CreateModalOptions<TData> | CreateModalOptionsNoData,
+): ModalResult<TData> | ModalResultNoData {
   const cfg: ModalConfig = opts.config ?? {};
-  const contentFn = opts.component;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const contentFn = opts.component as (data?: any) => Node;
 
   const resolvedOptions: Required<ModalConfig> = {
     title: cfg.title ?? '',
@@ -91,20 +107,26 @@ export function createModal(opts: CreateModalOptions): ModalResult {
   let disposed = false;
   let contentNode: Node | null = null;
   let previousFocus: Element | null = null;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  let currentData: any = undefined;
 
   const entry: ModalEntry = {
     id: Symbol(),
     options: resolvedOptions,
     contentFn: () => {
       if (!contentNode) {
-        contentNode = contentFn();
+        contentNode = contentFn(currentData);
       }
       return contentNode;
     },
     isOpen: isOpenSignal,
-    open() {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    open(data?: any) {
       if (disposed) return;
       previousFocus = document.activeElement;
+      // Store data and reset content so component() is re-invoked with fresh data.
+      currentData = data;
+      contentNode = null;
       isOpenSignal.set(true);
       resolvedOptions.onOpen();
     },
