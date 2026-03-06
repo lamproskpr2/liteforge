@@ -20,7 +20,7 @@ import {
   type LazyDefaults,
 } from 'liteforge/router';
 import { authStore } from './stores/auth.js';
-import { uiStore } from './stores/ui.js';
+import { toast } from '@liteforge/toast';
 
 // Static imports (small pages needed immediately)
 import { HomePage } from './pages/Home.js';
@@ -108,7 +108,7 @@ export const authGuard = defineGuard('auth', async ({ to }) => {
 export const adminGuard = defineGuard('admin', async () => {
   if (!authStore.isAdmin()) {
     console.log('[AdminGuard] Not an admin, blocking access');
-    uiStore.notify('error', 'You do not have permission to access this area');
+    toast.error('You do not have permission to access this area');
     return '/dashboard';
   }
 
@@ -265,6 +265,12 @@ export const routes: RouteDefinition[] = [
         component: () => import('./pages/dashboard/I18n.js'),
         export: 'I18nPage',
         meta: { title: 'i18n Demo' },
+      },
+      {
+        path: '/toasts',
+        component: () => import('./pages/dashboard/Toasts.js'),
+        export: 'ToastsPage',
+        meta: { title: 'Toasts' },
       },
     ],
   },

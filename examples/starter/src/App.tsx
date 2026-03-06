@@ -1,15 +1,10 @@
 /**
  * App Root Component
- * 
+ *
  * Main application shell with header and RouterOutlet.
- * 
- * Demonstrates:
- * - Root level RouterOutlet
- * - Global header with navigation
- * - Notification display with For
  */
 
-import { createComponent, Show, For } from 'liteforge';
+import { createComponent, Show } from 'liteforge';
 import { Link, RouterOutlet } from 'liteforge/router';
 import { authStore } from './stores/auth.js';
 import { uiStore } from './stores/ui.js';
@@ -68,25 +63,6 @@ export const App = createComponent({
         
         <div class="app-content">
           {RouterOutlet()}
-        </div>
-        
-        <div class="notifications">
-          {For({
-            each: () => uiStore.sortedNotifications(),
-            key: 'id',
-            children: (notification) => (
-              <div class={`notification ${notification.type}`}>
-                <span>{notification.message}</span>
-                <button 
-                  type="button"
-                  class="dismiss-btn"
-                  onClick={() => uiStore.dismissNotification(notification.id)}
-                >
-                  x
-                </button>
-              </div>
-            ),
-          })}
         </div>
       </div>
     );

@@ -11,7 +11,7 @@
 
 import { signal } from 'liteforge';
 import { createComponent, For } from 'liteforge';
-import { uiStore } from '../../stores/ui.js';
+import { toast } from '@liteforge/toast';
 
 // =============================================================================
 // Types
@@ -59,7 +59,7 @@ export const AdminUsers = createComponent({
             : u
         )
       );
-      uiStore.notify('success', 'User status updated');
+      toast.success('User status updated');
     };
 
     const toggleRole = (userId: string) => {
@@ -70,14 +70,14 @@ export const AdminUsers = createComponent({
             : u
         )
       );
-      uiStore.notify('info', 'User role updated');
+      toast.info('User role updated');
     };
 
     const deleteUser = (userId: string) => {
       const user = users().find(u => u.id === userId);
       if (user && confirm(`Delete user ${user.name}?`)) {
         users.update(list => list.filter(u => u.id !== userId));
-        uiStore.notify('warning', `User ${user.name} deleted`);
+        toast.warning(`User ${user.name} deleted`);
       }
     };
 

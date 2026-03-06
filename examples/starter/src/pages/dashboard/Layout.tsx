@@ -93,6 +93,11 @@ export const DashboardLayout = createComponent({
               activeClass: 'active',
             })}
             {Link({
+              href: '/dashboard/toasts',
+              children: 'Toasts',
+              activeClass: 'active',
+            })}
+            {Link({
               href: '/lf-admin',
               children: 'LF Admin',
               activeClass: 'active',

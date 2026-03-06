@@ -52,6 +52,7 @@ export default defineConfig({
       '@liteforge/admin':      path.resolve(__dirname, '../../packages/admin/src/index.ts'),
       '@liteforge/theme/css':  path.resolve(__dirname, '../../packages/theme/css/index.css'),
       '@liteforge/theme':      path.resolve(__dirname, '../../packages/theme/src/index.ts'),
+      '@liteforge/toast':      path.resolve(__dirname, '../../packages/toast/src/index.ts'),
     },
   },
 });
