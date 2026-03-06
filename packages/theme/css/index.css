@@ -1,0 +1,14 @@
+/*
+ * @liteforge/theme — Full Theme Bundle
+ *
+ * Convenience file that imports both base tokens and dark mode overrides.
+ * Does NOT include reset.css — import that separately if desired.
+ *
+ * Usage:
+ *   import '@liteforge/theme/css';
+ * or in CSS:
+ *   @import '@liteforge/theme/css';
+ */
+
+@import './base.css';
+@import './dark.css';

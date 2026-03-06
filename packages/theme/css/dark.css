@@ -1,0 +1,151 @@
+/*
+ * @liteforge/theme — Dark Mode Overrides
+ *
+ * Provides dark semantic tokens via:
+ *   1. [data-theme="dark"] — explicit theme set via JS
+ *   2. .dark               — utility class
+ *   3. @media (prefers-color-scheme: dark) — system preference
+ *      (skipped when [data-theme="light"] is explicitly set)
+ *
+ * Also provides light overrides for [data-theme="light"] so an explicit
+ * light selection wins over system dark preference.
+ *
+ * Must be imported AFTER base.css.
+ *
+ * Usage:
+ *   import '@liteforge/theme/css/dark';
+ */
+
+/* ─── Dark Semantic Overrides ─────────────────────────────────────────── */
+
+[data-theme="dark"],
+.dark {
+  /* Backgrounds */
+  --lf-color-bg:          var(--lf-prim-mocha-crust);
+  --lf-color-bg-subtle:   var(--lf-prim-mocha-mantle);
+  --lf-color-bg-muted:    var(--lf-prim-mocha-base);
+  --lf-color-bg-overlay:  rgba(0, 0, 0, 0.7);
+
+  /* Surfaces */
+  --lf-color-surface:     var(--lf-prim-mocha-base);
+  --lf-color-surface-raised: var(--lf-prim-mocha-surface0);
+
+  /* Borders */
+  --lf-color-border:      var(--lf-prim-mocha-surface0);
+  --lf-color-border-strong: var(--lf-prim-mocha-surface1);
+
+  /* Text */
+  --lf-color-text:        var(--lf-prim-mocha-text);
+  --lf-color-text-muted:  var(--lf-prim-mocha-subtext);
+  --lf-color-text-subtle: var(--lf-prim-mocha-surface1);
+  --lf-color-text-on-accent: var(--lf-prim-mocha-base);
+
+  /* Accent */
+  --lf-color-accent:      var(--lf-prim-mocha-blue);
+  --lf-color-accent-hover: #7aa2f7;
+  --lf-color-accent-subtle: rgba(137, 180, 250, 0.15);
+
+  /* Status */
+  --lf-color-success:     var(--lf-prim-mocha-green);
+  --lf-color-success-bg:  rgba(166, 227, 161, 0.15);
+  --lf-color-danger:      var(--lf-prim-mocha-red);
+  --lf-color-danger-bg:   rgba(243, 139, 168, 0.15);
+  --lf-color-warning:     var(--lf-prim-mocha-yellow);
+  --lf-color-warning-bg:  rgba(249, 226, 175, 0.15);
+
+  /* Shadows */
+  --lf-shadow-sm:   0 1px 2px rgba(0, 0, 0, 0.2);
+  --lf-shadow-md:   0 4px 12px rgba(0, 0, 0, 0.4);
+  --lf-shadow-lg:   0 8px 24px rgba(0, 0, 0, 0.5);
+  --lf-shadow-xl:   0 20px 60px rgba(0, 0, 0, 0.6);
+}
+
+/* ─── System Dark Preference ──────────────────────────────────────────── */
+/* Only applies when no explicit [data-theme] is set                        */
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    /* Backgrounds */
+    --lf-color-bg:          var(--lf-prim-mocha-crust);
+    --lf-color-bg-subtle:   var(--lf-prim-mocha-mantle);
+    --lf-color-bg-muted:    var(--lf-prim-mocha-base);
+    --lf-color-bg-overlay:  rgba(0, 0, 0, 0.7);
+
+    /* Surfaces */
+    --lf-color-surface:     var(--lf-prim-mocha-base);
+    --lf-color-surface-raised: var(--lf-prim-mocha-surface0);
+
+    /* Borders */
+    --lf-color-border:      var(--lf-prim-mocha-surface0);
+    --lf-color-border-strong: var(--lf-prim-mocha-surface1);
+
+    /* Text */
+    --lf-color-text:        var(--lf-prim-mocha-text);
+    --lf-color-text-muted:  var(--lf-prim-mocha-subtext);
+    --lf-color-text-subtle: var(--lf-prim-mocha-surface1);
+    --lf-color-text-on-accent: var(--lf-prim-mocha-base);
+
+    /* Accent */
+    --lf-color-accent:      var(--lf-prim-mocha-blue);
+    --lf-color-accent-hover: #7aa2f7;
+    --lf-color-accent-subtle: rgba(137, 180, 250, 0.15);
+
+    /* Status */
+    --lf-color-success:     var(--lf-prim-mocha-green);
+    --lf-color-success-bg:  rgba(166, 227, 161, 0.15);
+    --lf-color-danger:      var(--lf-prim-mocha-red);
+    --lf-color-danger-bg:   rgba(243, 139, 168, 0.15);
+    --lf-color-warning:     var(--lf-prim-mocha-yellow);
+    --lf-color-warning-bg:  rgba(249, 226, 175, 0.15);
+
+    /* Shadows */
+    --lf-shadow-sm:   0 1px 2px rgba(0, 0, 0, 0.2);
+    --lf-shadow-md:   0 4px 12px rgba(0, 0, 0, 0.4);
+    --lf-shadow-lg:   0 8px 24px rgba(0, 0, 0, 0.5);
+    --lf-shadow-xl:   0 20px 60px rgba(0, 0, 0, 0.6);
+  }
+}
+
+/* ─── Explicit Light Override ─────────────────────────────────────────── */
+/* Ensures [data-theme="light"] wins even on dark-system-preference devices */
+
+[data-theme="light"] {
+  /* Backgrounds */
+  --lf-color-bg:          var(--lf-prim-neutral-0);
+  --lf-color-bg-subtle:   var(--lf-prim-neutral-50);
+  --lf-color-bg-muted:    var(--lf-prim-neutral-100);
+  --lf-color-bg-overlay:  rgba(0, 0, 0, 0.5);
+
+  /* Surfaces */
+  --lf-color-surface:     var(--lf-prim-neutral-0);
+  --lf-color-surface-raised: var(--lf-prim-neutral-50);
+
+  /* Borders */
+  --lf-color-border:      var(--lf-prim-neutral-200);
+  --lf-color-border-strong: var(--lf-prim-neutral-300);
+
+  /* Text */
+  --lf-color-text:        var(--lf-prim-neutral-800);
+  --lf-color-text-muted:  var(--lf-prim-neutral-500);
+  --lf-color-text-subtle: var(--lf-prim-neutral-400);
+  --lf-color-text-on-accent: var(--lf-prim-neutral-0);
+
+  /* Accent */
+  --lf-color-accent:      var(--lf-prim-blue-600);
+  --lf-color-accent-hover: var(--lf-prim-blue-700);
+  --lf-color-accent-subtle: var(--lf-prim-blue-100);
+
+  /* Status */
+  --lf-color-success:     var(--lf-prim-green-600);
+  --lf-color-success-bg:  var(--lf-prim-green-100);
+  --lf-color-danger:      var(--lf-prim-red-600);
+  --lf-color-danger-bg:   var(--lf-prim-red-100);
+  --lf-color-warning:     var(--lf-prim-orange-500);
+  --lf-color-warning-bg:  var(--lf-prim-orange-100);
+
+  /* Shadows */
+  --lf-shadow-sm:   0 1px 2px rgba(0, 0, 0, 0.05);
+  --lf-shadow-md:   0 4px 12px rgba(0, 0, 0, 0.1);
+  --lf-shadow-lg:   0 8px 24px rgba(0, 0, 0, 0.12);
+  --lf-shadow-xl:   0 20px 60px rgba(0, 0, 0, 0.15);
+}

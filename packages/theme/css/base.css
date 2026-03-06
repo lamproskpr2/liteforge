@@ -1,0 +1,162 @@
+/*
+ * @liteforge/theme — Primitive + Semantic Tokens
+ *
+ * Import this file to get all CSS custom properties for the LiteForge
+ * design system. Dark mode overrides are in dark.css.
+ *
+ * Usage:
+ *   import '@liteforge/theme/css/base';
+ * or in CSS:
+ *   @import '@liteforge/theme/css/base';
+ */
+
+/* ─── Primitive Tokens ──────────────────────────────────────────────────── */
+/* Raw color palette — do not reference these directly in components.        */
+/* Use semantic tokens (--lf-color-*) or package tokens (--lf-modal-*)      */
+/* instead.                                                                  */
+
+:root {
+  /* Neutral */
+  --lf-prim-neutral-0:   #ffffff;
+  --lf-prim-neutral-50:  #f8fafc;
+  --lf-prim-neutral-100: #f1f5f9;
+  --lf-prim-neutral-200: #e2e8f0;
+  --lf-prim-neutral-300: #cbd5e1;
+  --lf-prim-neutral-400: #94a3b8;
+  --lf-prim-neutral-500: #64748b;
+  --lf-prim-neutral-600: #475569;
+  --lf-prim-neutral-700: #334155;
+  --lf-prim-neutral-800: #1e293b;
+  --lf-prim-neutral-900: #0f172a;
+  --lf-prim-neutral-950: #020617;
+
+  /* Blue */
+  --lf-prim-blue-100: #dbeafe;
+  --lf-prim-blue-200: #bfdbfe;
+  --lf-prim-blue-300: #93c5fd;
+  --lf-prim-blue-400: #60a5fa;
+  --lf-prim-blue-500: #3b82f6;
+  --lf-prim-blue-600: #2563eb;
+  --lf-prim-blue-700: #1d4ed8;
+
+  /* Green */
+  --lf-prim-green-100: #dcfce7;
+  --lf-prim-green-200: #bbf7d0;
+  --lf-prim-green-500: #22c55e;
+  --lf-prim-green-600: #16a34a;
+
+  /* Red */
+  --lf-prim-red-100: #fee2e2;
+  --lf-prim-red-200: #fecaca;
+  --lf-prim-red-500: #ef4444;
+  --lf-prim-red-600: #dc2626;
+
+  /* Orange / Warning */
+  --lf-prim-orange-100: #ffedd5;
+  --lf-prim-orange-500: #f97316;
+
+  /* Catppuccin Mocha palette (used in dark mode) */
+  --lf-prim-mocha-base:    #1e1e2e;
+  --lf-prim-mocha-mantle:  #181825;
+  --lf-prim-mocha-crust:   #11111b;
+  --lf-prim-mocha-surface0:#313244;
+  --lf-prim-mocha-surface1:#45475a;
+  --lf-prim-mocha-text:    #cdd6f4;
+  --lf-prim-mocha-subtext: #a6adc8;
+  --lf-prim-mocha-blue:    #89b4fa;
+  --lf-prim-mocha-green:   #a6e3a1;
+  --lf-prim-mocha-red:     #f38ba8;
+  --lf-prim-mocha-yellow:  #f9e2af;
+}
+
+/* ─── Semantic Tokens (Light Mode — default) ────────────────────────────── */
+
+:root {
+  /* Backgrounds */
+  --lf-color-bg:          var(--lf-prim-neutral-0);
+  --lf-color-bg-subtle:   var(--lf-prim-neutral-50);
+  --lf-color-bg-muted:    var(--lf-prim-neutral-100);
+  --lf-color-bg-overlay:  rgba(0, 0, 0, 0.5);
+
+  /* Surfaces (cards, modals, panels) */
+  --lf-color-surface:     var(--lf-prim-neutral-0);
+  --lf-color-surface-raised: var(--lf-prim-neutral-50);
+
+  /* Borders */
+  --lf-color-border:      var(--lf-prim-neutral-200);
+  --lf-color-border-strong: var(--lf-prim-neutral-300);
+
+  /* Text */
+  --lf-color-text:        var(--lf-prim-neutral-800);
+  --lf-color-text-muted:  var(--lf-prim-neutral-500);
+  --lf-color-text-subtle: var(--lf-prim-neutral-400);
+  --lf-color-text-on-accent: var(--lf-prim-neutral-0);
+
+  /* Accent / Primary */
+  --lf-color-accent:      var(--lf-prim-blue-600);
+  --lf-color-accent-hover: var(--lf-prim-blue-700);
+  --lf-color-accent-subtle: var(--lf-prim-blue-100);
+
+  /* Status */
+  --lf-color-success:     var(--lf-prim-green-600);
+  --lf-color-success-bg:  var(--lf-prim-green-100);
+  --lf-color-danger:      var(--lf-prim-red-600);
+  --lf-color-danger-bg:   var(--lf-prim-red-100);
+  --lf-color-warning:     var(--lf-prim-orange-500);
+  --lf-color-warning-bg:  var(--lf-prim-orange-100);
+
+  /* Radius scale */
+  --lf-radius-sm:         4px;
+  --lf-radius-md:         6px;
+  --lf-radius-lg:         8px;
+  --lf-radius-xl:         12px;
+  --lf-radius-full:       9999px;
+
+  /* Spacing scale */
+  --lf-space-1:            4px;
+  --lf-space-2:            8px;
+  --lf-space-3:           12px;
+  --lf-space-4:           16px;
+  --lf-space-5:           20px;
+  --lf-space-6:           24px;
+  --lf-space-8:           32px;
+  --lf-space-10:          40px;
+  --lf-space-12:          48px;
+
+  /* Typography */
+  --lf-font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+  --lf-font-mono: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+
+  --lf-text-xs:   11px;
+  --lf-text-sm:   13px;
+  --lf-text-base: 14px;
+  --lf-text-md:   16px;
+  --lf-text-lg:   18px;
+  --lf-text-xl:   20px;
+  --lf-text-2xl:  24px;
+
+  --lf-font-regular:  400;
+  --lf-font-medium:   500;
+  --lf-font-semibold: 600;
+  --lf-font-bold:     700;
+
+  /* Shadows */
+  --lf-shadow-sm:   0 1px 2px rgba(0, 0, 0, 0.05);
+  --lf-shadow-md:   0 4px 12px rgba(0, 0, 0, 0.1);
+  --lf-shadow-lg:   0 8px 24px rgba(0, 0, 0, 0.12);
+  --lf-shadow-xl:   0 20px 60px rgba(0, 0, 0, 0.15);
+
+  /* Transitions */
+  --lf-transition-fast:   0.1s ease;
+  --lf-transition-base:   0.2s ease;
+  --lf-transition-slow:   0.3s ease;
+
+  /* Z-index scale */
+  --lf-z-base:    0;
+  --lf-z-raised:  10;
+  --lf-z-dropdown: 100;
+  --lf-z-sticky:  200;
+  --lf-z-modal:   1000;
+  --lf-z-toast:   1100;
+  --lf-z-tooltip: 1200;
+}

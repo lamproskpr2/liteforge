@@ -1,0 +1,70 @@
+{
+  "name": "@liteforge/theme",
+  "version": "0.1.0",
+  "description": "Shared design-token system for LiteForge UI packages. Primitive + semantic CSS variables, dark mode, optional reset.",
+  "author": "SchildW3rk <contact@schildw3rk.dev>",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/schildw3rk/liteforge",
+    "directory": "packages/theme"
+  },
+  "homepage": "https://github.com/schildw3rk/liteforge#readme",
+  "bugs": {
+    "url": "https://github.com/schildw3rk/liteforge/issues"
+  },
+  "keywords": [
+    "liteforge",
+    "theme",
+    "design-tokens",
+    "css-variables",
+    "dark-mode"
+  ],
+  "type": "module",
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./css": {
+      "import": "./css/index.css",
+      "default": "./css/index.css"
+    },
+    "./css/base": {
+      "import": "./css/base.css",
+      "default": "./css/base.css"
+    },
+    "./css/dark": {
+      "import": "./css/dark.css",
+      "default": "./css/dark.css"
+    },
+    "./css/reset": {
+      "import": "./css/reset.css",
+      "default": "./css/reset.css"
+    }
+  },
+  "files": [
+    "dist",
+    "css",
+    "README.md",
+    "LICENSE"
+  ],
+  "sideEffects": [
+    "css/*.css"
+  ],
+  "engines": {
+    "node": ">=18"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "dev": "tsc -p tsconfig.build.json --watch",
+    "typecheck": "tsc --noEmit",
+    "clean": "rm -rf dist *.tsbuildinfo"
+  }
+}
