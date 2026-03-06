@@ -20,6 +20,8 @@
 
     <!-- Prevent flash of unstyled content -->
     <style>
+      html, body { height: 100%; margin: 0; }
+      #app { height: 100%; display: flex; flex-direction: column; }
       #app:empty::before {
         content: "Loading LiteForge...";
         display: flex;

@@ -1,10 +1,10 @@
 {
   "name": "@liteforge/starter",
   "private": true,
-  "version": "0.0.18",
+  "version": "0.0.19",
   "type": "module",
   "scripts": {
-    "dev": "vite --port 5666",
+    "dev": "vite --port 2025",
     "build": "tsc && vite build",
     "preview": "vite preview"
   },

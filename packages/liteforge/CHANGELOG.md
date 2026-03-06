@@ -1,5 +1,23 @@
 # liteforge
 
+## 0.6.7
+
+### Patch Changes
+
+- Updated dependencies
+- Updated dependencies
+- Updated dependencies
+  - @liteforge/calendar@0.3.0
+  - @liteforge/modal@3.1.0
+  - @liteforge/router@0.4.2
+  - @liteforge/runtime@0.6.1
+  - @liteforge/admin@3.0.0
+  - @liteforge/client@3.0.0
+  - @liteforge/devtools@3.0.0
+  - @liteforge/i18n@2.0.0
+  - @liteforge/query@3.0.0
+  - @liteforge/toast@2.0.0
+
 ## 0.6.5
 
 ### Patch Changes
