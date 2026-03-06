@@ -1,5 +1,11 @@
 # @liteforge/vite-plugin
 
+## 0.4.3
+
+### Patch Changes
+
+- Add Vite 7 to peer dependency range (`^5.0.0 || ^6.0.0 || ^7.0.0`)
+
 ## 0.4.2
 
 ### Patch Changes
