@@ -21,8 +21,12 @@
       "liteforge/vite-plugin": ["packages/liteforge/src/vite-plugin.ts"],
       "liteforge/admin": ["packages/liteforge/src/admin.ts"],
       "liteforge/i18n": ["packages/liteforge/src/i18n.ts"],
+      "liteforge/toast": ["packages/toast/src/index.ts"],
+      "@liteforge/toast": ["packages/toast/src/index.ts"],
       "@liteforge/admin": ["packages/admin/src/index.ts"],
-      "@liteforge/admin/*": ["packages/admin/src/*"]
+      "@liteforge/admin/*": ["packages/admin/src/*"],
+      "@liteforge/devtools": ["packages/devtools/src/index.ts"],
+      "@liteforge/devtools/*": ["packages/devtools/src/*"]
     }
   },
   "include": ["src/**/*.ts", "src/**/*.tsx"]

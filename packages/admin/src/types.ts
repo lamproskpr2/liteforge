@@ -115,10 +115,10 @@ export interface BulkAction<T = Record<string, unknown>> {
 
 export type DashboardWidgetType = 'count' | 'list' | 'custom';
 
-export interface DashboardWidgetConfig<T = Record<string, unknown>> {
+export interface DashboardWidgetConfig {
   type: DashboardWidgetType;
   label: string;
-  resource?: ResourceDefinition<T>;
+  resource?: ResourceDefinition<any>;
   limit?: number;
   render?: () => Node;
 }
@@ -159,7 +159,7 @@ export interface DefineResourceOptions<T = Record<string, unknown>> {
 
 export interface AdminApi {
   navigate: (path: string) => void;
-  registry: Map<string, ResourceDefinition<unknown>>;
+  registry: Map<string, ResourceDefinition<any>>;
 }
 
 export interface AdminPluginOptions {

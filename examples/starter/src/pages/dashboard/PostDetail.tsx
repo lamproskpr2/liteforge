@@ -10,6 +10,7 @@
 
 import { createComponent, Show, For } from 'liteforge';
 import { Link, useParam } from 'liteforge/router';
+import type { QueryApi } from 'liteforge/query';
 
 // =============================================================================
 // Types
@@ -54,7 +55,7 @@ export const PostDetailPage = createComponent({
   name: 'PostDetailPage',
 
   setup({ use }) {
-    const { createQuery } = use('query');
+    const { createQuery } = use<QueryApi>('query');
     const postId = useParam('id');
 
     const postQuery = createQuery({

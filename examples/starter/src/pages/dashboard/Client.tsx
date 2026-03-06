@@ -9,6 +9,7 @@
 import { createComponent } from 'liteforge';
 import { createClient, ApiError, useQueryClient } from 'liteforge/client';
 import type { RequestConfig, ResponseContext } from 'liteforge/client';
+import type { QueryApi } from 'liteforge/query';
 import { signal } from 'liteforge';
 
 // ============================================================================
@@ -37,7 +38,7 @@ export const ClientPage = createComponent({
 
   setup({ use }) {
     const client = useQueryClient();
-    const { createQuery } = use('query');
+    const { createQuery } = use<QueryApi>('query');
 
     // -----------------------------------------------------------------------
     // Section 1 — bare client WITHOUT query integration
