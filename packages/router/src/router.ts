@@ -23,8 +23,10 @@ import type {
 import {
   compileRoutes,
   matchRoutes,
+  matchRoutesSync,
   findRouteByName,
   createLocation,
+  type CompileRouteOptions,
 } from './route-matcher.js';
 import { createMemoryHistory } from './history.js';
 import { GuardRegistry, runGuards, collectRouteGuards, normalizeGuardResult } from './guards.js';
@@ -62,6 +64,9 @@ export function createRouter(options: RouterOptions): Router {
 
   // Compile routes with guard registry and lazy defaults
   const compiledRoutes = compileRoutes(routeDefinitions, guardRegistry.getMap(), lazyDefaults);
+
+  // Options passed to matchRoutes so lazyChildren can be compiled with the same config
+  const matchOptions: CompileRouteOptions = { guardRegistry: guardRegistry.getMap(), lazyDefaults };
 
   // Context accessor - will be set when router is attached to app
   let contextAccessor: <T>(key: string) => T = () => {
@@ -130,7 +135,7 @@ export function createRouter(options: RouterOptions): Router {
     const targetLocation = createLocation(target, state);
 
     // Match routes
-    const matched = matchRoutes(targetLocation.path, compiledRoutes);
+    const matched = await matchRoutes(targetLocation.path, compiledRoutes, matchOptions);
 
     if (!matched || matched.length === 0) {
       // No route matched - update location anyway for 404 handling
@@ -281,7 +286,7 @@ export function createRouter(options: RouterOptions): Router {
 
         // Success - finalize navigation
         const finalTargetLocation = createLocation(currentTarget, currentState);
-        const matched = matchRoutes(finalTargetLocation.path, compiledRoutes) ?? [];
+        const matched = await matchRoutes(finalTargetLocation.path, compiledRoutes, matchOptions) ?? [];
 
         // Capture scroll position BEFORE history.push changes window.history.state
         if (typeof window !== 'undefined') {
@@ -365,10 +370,20 @@ export function createRouter(options: RouterOptions): Router {
    */
   const unlistenHistory = history.listen((location, action) => {
     if (action === 'pop') {
-      // User pressed back/forward - sync state
-      const matched = matchRoutes(location.path, compiledRoutes);
+      // User pressed back/forward
+      // Update path/query/hash synchronously so signals are immediately correct.
+      // Use async matchRoutes for matched[] (lazyChildren may already be loaded from prior navigation)
       currentLocation = location;
-      updateState(location, matched ?? []);
+      const syncMatched = matchRoutesSync(location.path, compiledRoutes);
+      updateState(location, syncMatched ?? []);
+
+      // If there are lazyChildren routes, an async pass may produce a richer match.
+      // Fire-and-forget — the sync state above is already correct for normal routes.
+      void matchRoutes(location.path, compiledRoutes, matchOptions).then(matched => {
+        if (matched && matched.length > (syncMatched?.length ?? 0)) {
+          updateState(location, matched);
+        }
+      });
 
       // Restore scroll position for back/forward navigation
       if (typeof window !== 'undefined') {
@@ -377,9 +392,10 @@ export function createRouter(options: RouterOptions): Router {
     }
   });
 
-  // Initialize with current location
-  const initialMatched = matchRoutes(history.location.path, compiledRoutes);
+  // Initialize with current location using sync match
+  // (lazyChildren not yet loaded at startup — sync is safe and keeps state immediately available)
   currentLocation = history.location;
+  const initialMatched = matchRoutesSync(history.location.path, compiledRoutes);
   updateState(history.location, initialMatched ?? []);
 
   // Router instance
@@ -460,7 +476,9 @@ export function createRouter(options: RouterOptions): Router {
 
     resolve(target) {
       const location = createLocation(target);
-      const matched = matchRoutes(location.path, compiledRoutes);
+      // resolve() is synchronous — lazyChildren won't be expanded here.
+      // Use matchRoutesSync which only checks already-compiled children.
+      const matched = matchRoutesSync(location.path, compiledRoutes);
       const route = matched?.[matched.length - 1]?.route;
       const params = matched?.[matched.length - 1]?.params ?? {};
 

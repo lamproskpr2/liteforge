@@ -27,18 +27,23 @@ import { HomePage } from './pages/Home.js';
 import { LoginPage } from './pages/Login.js';
 import { NotFoundPage } from './pages/NotFound.js';
 
-// Admin panel (liteforge/admin demo)
-import { buildAdminRoutes } from 'liteforge/admin';
-import { postsResource, usersResource, adminDashboard, createMockClient } from './pages/admin-panel/resources.js';
-
-const adminRoutes = buildAdminRoutes({
-  resources: [postsResource, usersResource],
-  basePath: '/lf-admin',
-  client: createMockClient(),
-  title: 'LiteForge Admin',
-  dashboard: adminDashboard,
-  showActivityLog: true,
-});
+// Admin panel (liteforge/admin demo) — loaded lazily on first visit to /lf-admin
+// This keeps the initial bundle free of admin-panel code (~@liteforge/admin + resources)
+function loadAdminRoutes() {
+  return Promise.all([
+    import('liteforge/admin'),
+    import('./pages/admin-panel/resources.js'),
+  ]).then(([{ buildAdminRoutes }, { postsResource, usersResource, adminDashboard, createMockClient }]) =>
+    buildAdminRoutes({
+      resources: [postsResource, usersResource],
+      basePath: '/lf-admin',
+      client: createMockClient(),
+      title: 'LiteForge Admin',
+      dashboard: adminDashboard,
+      showActivityLog: true,
+    })
+  );
+}
 
 // =============================================================================
 // Global Lazy Loading Defaults
@@ -235,9 +240,12 @@ export const routes: RouteDefinition[] = [
   },
 
   // ==========================================================================
-  // LiteForge Admin Panel demo routes (no auth required for demo)
+  // LiteForge Admin Panel demo routes — lazy-loaded subtree
   // ==========================================================================
-  ...adminRoutes,
+  {
+    path: '/lf-admin',
+    lazyChildren: loadAdminRoutes,
+  },
 
   // ==========================================================================
   // Admin routes (lazy-loaded, requires admin role)

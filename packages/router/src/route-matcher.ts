@@ -328,6 +328,11 @@ export function compileRoute(
     compiled.preload = definition.preload;
   }
 
+  // Store lazyChildren loader (resolved on first match)
+  if (definition.lazyChildren !== undefined) {
+    compiled.lazyChildrenFn = definition.lazyChildren;
+  }
+
   // Compile children recursively
   if (definition.children) {
     compiled.children = definition.children.map((child) =>
@@ -429,14 +434,40 @@ export function matchRoute(path: string, route: CompiledRoute): MatchedRoute | n
   return { route, params };
 }
 
+// Cache for resolved lazyChildren — keyed by the CompiledRoute object
+const lazyChildrenCache = new WeakMap<CompiledRoute, CompiledRoute[]>();
+
+/**
+ * Resolve children for a route, loading lazyChildren on first call.
+ * Result is cached on the CompiledRoute (both in the WeakMap and mutated into
+ * route.children) so future synchronous traversals also see the loaded children.
+ */
+async function resolveChildren(
+  route: CompiledRoute,
+  options: CompileRouteOptions
+): Promise<CompiledRoute[]> {
+  if (route.children.length > 0) return route.children;
+  if (!route.lazyChildrenFn) return route.children;
+
+  if (lazyChildrenCache.has(route)) return lazyChildrenCache.get(route)!;
+
+  const defs = await route.lazyChildrenFn();
+  const compiled = defs.map(d => compileRoute(d, route, options));
+  // Mutate so future sync traversals (flattenRoutes, findRouteByName) work too
+  route.children = compiled;
+  lazyChildrenCache.set(route, compiled);
+  return compiled;
+}
+
 /**
  * Recursively find matching routes in the tree
  */
-function findMatchingRoute(
+async function findMatchingRoute(
   path: string,
   routes: CompiledRoute[],
+  options: CompileRouteOptions,
   parentParams: RouteParams = {}
-): RouteMatch | null {
+): Promise<RouteMatch | null> {
   const normalizedPath = normalizePath(path);
 
   for (const route of routes) {
@@ -451,10 +482,13 @@ function findMatchingRoute(
         params: combinedParams,
       };
 
+      // Resolve children (may trigger lazyChildren load)
+      const children = await resolveChildren(route, options);
+
       // If this route has children, try to match them first
       // But only if this is not a catch-all route and has a component
-      if (route.children.length > 0 && !route.isCatchAll) {
-        const childMatch = findMatchingRoute(normalizedPath, route.children, combinedParams);
+      if (children.length > 0 && !route.isCatchAll) {
+        const childMatch = await findMatchingRoute(normalizedPath, children, options, combinedParams);
         if (childMatch) {
           // Prepend this route to the match chain
           return [matchedWithParams, ...childMatch];
@@ -467,11 +501,13 @@ function findMatchingRoute(
 
     // If no direct match, try children anyway for nested paths
     // This handles cases where parent path is a prefix
-    if (route.children.length > 0) {
+    const routeBasePath = route.fullPath === '/' ? '' : route.fullPath;
+    const couldHaveChildren = route.children.length > 0 || route.lazyChildrenFn !== undefined;
+    if (couldHaveChildren) {
       // Check if this route's path is a prefix of the target path
-      const routeBasePath = route.fullPath === '/' ? '' : route.fullPath;
       if (normalizedPath.startsWith(routeBasePath + '/') || normalizedPath === routeBasePath) {
-        const childMatch = findMatchingRoute(normalizedPath, route.children, parentParams);
+        const children = await resolveChildren(route, options);
+        const childMatch = await findMatchingRoute(normalizedPath, children, options, parentParams);
         if (childMatch) {
           // Include the parent in the chain if it has a component (layout route)
           // For nested routes, the parent should be included even if it doesn't "match" the full path
@@ -490,12 +526,66 @@ function findMatchingRoute(
 }
 
 /**
- * Match a path against compiled routes
- * Returns array of matched routes (for nested routes) or null if no match
+ * Match a path against compiled routes (async — supports lazyChildren loading).
+ * Returns array of matched routes (for nested routes) or null if no match.
  */
-export function matchRoutes(path: string, routes: CompiledRoute[]): RouteMatch | null {
+export function matchRoutes(
+  path: string,
+  routes: CompiledRoute[],
+  options?: CompileRouteOptions
+): Promise<RouteMatch | null> {
   const { path: pathname } = parsePath(path);
-  return findMatchingRoute(pathname, routes);
+  const opts = options ?? { guardRegistry: new Map(), lazyDefaults: undefined };
+  return findMatchingRoute(pathname, routes, opts);
+}
+
+/**
+ * Synchronous route matching — only checks already-compiled children.
+ * lazyChildren are NOT loaded. Use for resolve() and other sync contexts.
+ */
+export function matchRoutesSync(path: string, routes: CompiledRoute[]): RouteMatch | null {
+  const { path: pathname } = parsePath(path);
+  return findMatchingRouteSync(pathname, routes);
+}
+
+function findMatchingRouteSync(
+  path: string,
+  routes: CompiledRoute[],
+  parentParams: RouteParams = {}
+): RouteMatch | null {
+  const normalizedPath = normalizePath(path);
+
+  for (const route of routes) {
+    const matched = matchRoute(normalizedPath, route);
+
+    if (matched) {
+      const combinedParams = { ...parentParams, ...matched.params };
+      const matchedWithParams: MatchedRoute = { route: matched.route, params: combinedParams };
+
+      if (route.children.length > 0 && !route.isCatchAll) {
+        const childMatch = findMatchingRouteSync(normalizedPath, route.children, combinedParams);
+        if (childMatch) return [matchedWithParams, ...childMatch];
+      }
+
+      return [matchedWithParams];
+    }
+
+    if (route.children.length > 0) {
+      const routeBasePath = route.fullPath === '/' ? '' : route.fullPath;
+      if (normalizedPath.startsWith(routeBasePath + '/') || normalizedPath === routeBasePath) {
+        const childMatch = findMatchingRouteSync(normalizedPath, route.children, parentParams);
+        if (childMatch) {
+          if (route.component !== undefined) {
+            const prefixParams = extractPrefixParams(normalizedPath, route);
+            return [{ route, params: { ...parentParams, ...prefixParams } }, ...childMatch];
+          }
+          return childMatch;
+        }
+      }
+    }
+  }
+
+  return null;
 }
 
 /**

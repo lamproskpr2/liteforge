@@ -81,6 +81,7 @@ export {
   // Route matching
   matchRoute,
   matchRoutes,
+  matchRoutesSync,
   findRouteByName,
   generatePath,
   isPathActive,

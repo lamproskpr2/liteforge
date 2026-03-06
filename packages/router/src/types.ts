@@ -107,6 +107,14 @@ export interface RouteDefinition {
   guard?: string | string[] | RouteGuard | RouteGuard[];
   /** Child routes for nested routing */
   children?: RouteDefinition[];
+  /**
+   * Lazy-loaded child routes — loaded on first match of this route's prefix.
+   * Useful for code-splitting large route subtrees (e.g. admin panels).
+   * Children are resolved once and cached.
+   * @example
+   * { path: '/admin', lazyChildren: () => import('./admin-routes.js').then(m => m.adminRoutes) }
+   */
+  lazyChildren?: () => Promise<RouteDefinition[]>;
   /** Route name for programmatic navigation */
   name?: string;
   /** Meta information */
@@ -168,15 +176,20 @@ export interface CompiledRoute {
   preload?: PreloadFunction;
   /** Whether this is a catch-all route */
   isCatchAll: boolean;
-  
+
   // === Lazy loading metadata ===
-  
+
   /** Named export to use from lazy module */
   exportName?: string;
   /** Route-specific loading component */
   loadingComponent?: RouteComponent;
   /** Route-specific lazy config */
   lazyConfig?: RouteLazyConfig;
+
+  // === lazyChildren ===
+
+  /** Lazy children loader function (stored from RouteDefinition) */
+  lazyChildrenFn?: () => Promise<RouteDefinition[]>;
 }
 
 /**

@@ -520,46 +520,46 @@ describe('matchRoute', () => {
 // =============================================================================
 
 describe('matchRoutes', () => {
-  it('matches first matching route', () => {
+  it('matches first matching route', async () => {
     const routes = compileRoutes([
       { path: '/', component: () => document.createElement('div') },
       { path: '/users', component: () => document.createElement('div') },
     ]);
-    const match = matchRoutes('/users', routes);
+    const match = await matchRoutes('/users', routes);
     expect(match).not.toBeNull();
     expect(match![0]!.route.fullPath).toBe('/users');
   });
 
-  it('returns null when no route matches', () => {
+  it('returns null when no route matches', async () => {
     const routes = compileRoutes([
       { path: '/users', component: () => document.createElement('div') },
     ]);
-    const match = matchRoutes('/posts', routes);
+    const match = await matchRoutes('/posts', routes);
     expect(match).toBeNull();
   });
 
-  it('matches catch-all route last', () => {
+  it('matches catch-all route last', async () => {
     const routes = compileRoutes([
       { path: '/users', component: () => document.createElement('div') },
       { path: '*', component: () => document.createElement('div') },
     ]);
 
-    const usersMatch = matchRoutes('/users', routes);
+    const usersMatch = await matchRoutes('/users', routes);
     expect(usersMatch![0]!.route.fullPath).toBe('/users');
 
-    const anyMatch = matchRoutes('/anything', routes);
+    const anyMatch = await matchRoutes('/anything', routes);
     expect(anyMatch![0]!.route.isCatchAll).toBe(true);
   });
 
-  it('strips query string before matching', () => {
+  it('strips query string before matching', async () => {
     const routes = compileRoutes([
       { path: '/users', component: () => document.createElement('div') },
     ]);
-    const match = matchRoutes('/users?page=1', routes);
+    const match = await matchRoutes('/users?page=1', routes);
     expect(match).not.toBeNull();
   });
 
-  it('handles nested routes', () => {
+  it('handles nested routes', async () => {
     const routes = compileRoutes([
       {
         path: '/admin',
@@ -571,7 +571,7 @@ describe('matchRoutes', () => {
       },
     ]);
 
-    const match = matchRoutes('/admin/users', routes);
+    const match = await matchRoutes('/admin/users', routes);
     expect(match).not.toBeNull();
     expect(match?.length).toBeGreaterThanOrEqual(1);
     // Should include parent route in chain
@@ -751,16 +751,16 @@ describe('flattenRoutes', () => {
 // =============================================================================
 
 describe('edge cases', () => {
-  it('handles routes with similar prefixes correctly', () => {
+  it('handles routes with similar prefixes correctly', async () => {
     const routes = compileRoutes([
       { path: '/user', component: () => document.createElement('div') },
       { path: '/users', component: () => document.createElement('div') },
       { path: '/users/:id', component: () => document.createElement('div') },
     ]);
 
-    expect(matchRoutes('/user', routes)![0]!.route.fullPath).toBe('/user');
-    expect(matchRoutes('/users', routes)![0]!.route.fullPath).toBe('/users');
-    expect(matchRoutes('/users/42', routes)![0]!.route.fullPath).toBe('/users/:id');
+    expect((await matchRoutes('/user', routes))![0]!.route.fullPath).toBe('/user');
+    expect((await matchRoutes('/users', routes))![0]!.route.fullPath).toBe('/users');
+    expect((await matchRoutes('/users/42', routes))![0]!.route.fullPath).toBe('/users/:id');
   });
 
   it('handles deeply nested params', () => {
@@ -779,21 +779,21 @@ describe('edge cases', () => {
     });
   });
 
-  it('handles unicode in paths', () => {
+  it('handles unicode in paths', async () => {
     const routes = compileRoutes([
       { path: '/users/:name', component: () => document.createElement('div') },
     ]);
 
-    const match = matchRoutes('/users/%E4%B8%AD%E6%96%87', routes);
+    const match = await matchRoutes('/users/%E4%B8%AD%E6%96%87', routes);
     expect(match![0]!.params.name).toBe('中文');
   });
 
-  it('handles special characters in static paths', () => {
+  it('handles special characters in static paths', async () => {
     const routes = compileRoutes([
       { path: '/api/v1.0/data', component: () => document.createElement('div') },
     ]);
 
-    const match = matchRoutes('/api/v1.0/data', routes);
+    const match = await matchRoutes('/api/v1.0/data', routes);
     expect(match).not.toBeNull();
   });
 });
