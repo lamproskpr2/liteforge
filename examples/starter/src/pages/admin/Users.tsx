@@ -11,7 +11,7 @@
 
 import { signal } from 'liteforge';
 import { createComponent, For } from 'liteforge';
-import { toast } from '@liteforge/toast';
+import { toast } from 'liteforge/toast';
 
 // =============================================================================
 // Types

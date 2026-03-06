@@ -16,7 +16,7 @@ import { devtoolsPlugin } from 'liteforge/devtools';
 import { i18nPlugin } from 'liteforge/i18n';
 import type { TranslationTree } from 'liteforge/i18n';
 import { adminPlugin } from 'liteforge/admin';
-import { toastPlugin } from '@liteforge/toast';
+import { toastPlugin } from 'liteforge/toast';
 
 // Import app components
 import { App } from './App.js';

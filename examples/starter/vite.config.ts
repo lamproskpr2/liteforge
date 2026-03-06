@@ -33,6 +33,7 @@ export default defineConfig({
       'liteforge/devtools':    path.resolve(__dirname, '../../packages/devtools/src/index.ts'),
       'liteforge/i18n':        path.resolve(__dirname, '../../packages/i18n/src/index.ts'),
       'liteforge/admin':       path.resolve(__dirname, '../../packages/admin/src/index.ts'),
+      'liteforge/toast':       path.resolve(__dirname, '../../packages/toast/src/index.ts'),
       // liteforge (bare) stays on the umbrella barrel (core + runtime re-exports only)
       'liteforge':             path.resolve(__dirname, '../../packages/liteforge/src/index.ts'),
       // @liteforge/* aliases — used by the Vite plugin JSX transform and package internals

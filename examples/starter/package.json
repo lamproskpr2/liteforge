@@ -10,7 +10,6 @@
   },
   "dependencies": {
     "liteforge": "workspace:*",
-    "@liteforge/toast": "workspace:*",
     "zod": "^3.24.0"
   },
   "devDependencies": {

@@ -20,7 +20,7 @@ import {
   type LazyDefaults,
 } from 'liteforge/router';
 import { authStore } from './stores/auth.js';
-import { toast } from '@liteforge/toast';
+import { toast } from 'liteforge/toast';
 
 // Static imports (small pages needed immediately)
 import { HomePage } from './pages/Home.js';

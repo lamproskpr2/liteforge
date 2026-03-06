@@ -1,6 +1,7 @@
 # Dependencies
 node_modules/
 .pnpm-store/
+js-framework-benchmark/
 
 # Build outputs
 dist/

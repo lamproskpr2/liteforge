@@ -9,7 +9,7 @@
  */
 
 import { createComponent } from 'liteforge';
-import { toast } from '@liteforge/toast';
+import { toast } from 'liteforge/toast';
 
 // Simulated async operation
 function fakeApiCall(succeed: boolean): Promise<string> {
