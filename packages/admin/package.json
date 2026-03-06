@@ -23,7 +23,7 @@
     "css/*.css"
   ],
   "scripts": {
-    "build": "vite build",
+    "build": "tsc -p tsconfig.build.json",
     "typecheck": "tsc -p tsconfig.build.json --noEmit"
   },
   "peerDependencies": {
