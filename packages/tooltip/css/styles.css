@@ -1,0 +1,95 @@
+/* ─── CSS Variables ─────────────────────────────────────────── */
+:root {
+  --lf-tooltip-bg: #1e1e2e;
+  --lf-tooltip-color: #cdd6f4;
+  --lf-tooltip-radius: 6px;
+  --lf-tooltip-font-size: 12px;
+  --lf-tooltip-max-width: 240px;
+  --lf-tooltip-arrow-size: 5px;
+  --lf-tooltip-padding: 5px 10px;
+  --lf-tooltip-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+  --lf-tooltip-z: 99999;
+}
+
+[data-theme="light"] {
+  --lf-tooltip-bg: #313244;
+  --lf-tooltip-color: #cdd6f4;
+}
+
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme="dark"]) {
+    --lf-tooltip-bg: #313244;
+    --lf-tooltip-color: #cdd6f4;
+  }
+}
+
+/* ─── Tooltip ───────────────────────────────────────────────── */
+.lf-tooltip {
+  position: fixed;
+  z-index: var(--lf-tooltip-z);
+  background: var(--lf-tooltip-bg);
+  color: var(--lf-tooltip-color);
+  border-radius: var(--lf-tooltip-radius);
+  font-size: var(--lf-tooltip-font-size);
+  padding: var(--lf-tooltip-padding);
+  max-width: var(--lf-tooltip-max-width);
+  box-shadow: var(--lf-tooltip-shadow);
+  pointer-events: none;
+  white-space: nowrap;
+  line-height: 1.4;
+  opacity: 0;
+  transform: scale(0.95);
+  transition: opacity 0.15s ease, transform 0.15s ease;
+  /* Ensure tooltip is always on top of stacking contexts */
+  isolation: isolate;
+}
+
+.lf-tooltip--visible {
+  opacity: 1;
+  transform: scale(1);
+}
+
+/* ─── Arrow ─────────────────────────────────────────────────── */
+.lf-tooltip::before {
+  content: '';
+  position: absolute;
+  width: 0;
+  height: 0;
+  border: var(--lf-tooltip-arrow-size) solid transparent;
+}
+
+/* Arrow: top of target → arrow points downward from tooltip bottom */
+.lf-tooltip[data-position="top"]::before {
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border-top-color: var(--lf-tooltip-bg);
+  border-bottom: none;
+}
+
+/* Arrow: bottom of target → arrow points upward from tooltip top */
+.lf-tooltip[data-position="bottom"]::before {
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border-bottom-color: var(--lf-tooltip-bg);
+  border-top: none;
+}
+
+/* Arrow: left of target → arrow points rightward from tooltip right */
+.lf-tooltip[data-position="left"]::before {
+  left: 100%;
+  top: 50%;
+  transform: translateY(-50%);
+  border-left-color: var(--lf-tooltip-bg);
+  border-right: none;
+}
+
+/* Arrow: right of target → arrow points leftward from tooltip left */
+.lf-tooltip[data-position="right"]::before {
+  right: 100%;
+  top: 50%;
+  transform: translateY(-50%);
+  border-right-color: var(--lf-tooltip-bg);
+  border-left: none;
+}
