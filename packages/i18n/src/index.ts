@@ -6,7 +6,9 @@ export type {
   LocaleLoader,
   TranslationTree,
   TranslationValue,
+  ExtractKeys,
 } from './types.js';
+export type { I18nInstance } from './i18n.js';
 export { createI18n } from './i18n.js';
 export { i18nPlugin } from './plugin.js';
 export { resolveKey, interpolate, resolvePlural } from './resolve.js';

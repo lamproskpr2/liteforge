@@ -3,17 +3,19 @@
  */
 
 import { signal, batch } from '@liteforge/core';
-import type { I18nApi, I18nPluginOptions, Locale, TranslationTree } from './types.js';
+import type { I18nApi, I18nPluginOptions, Locale, TranslationTree, ExtractKeys } from './types.js';
 import { resolveKey, interpolate, resolvePlural } from './resolve.js';
 
-export interface I18nInstance extends I18nApi {
+export interface I18nInstance<T extends Record<string, unknown> = Record<string, string>> extends I18nApi<T> {
   /** Internal: load translations for the given locale (used by plugin) */
   _load(locale: Locale): Promise<void>;
   /** Internal: preload fallback translations (used by plugin) */
   _loadFallback(locale: Locale): Promise<void>;
 }
 
-export function createI18n(options: I18nPluginOptions): I18nInstance {
+export function createI18n<T extends Record<string, unknown> = Record<string, string>>(
+  options: I18nPluginOptions
+): I18nInstance<T> {
   const {
     defaultLocale,
     fallbackLocale,
@@ -62,16 +64,19 @@ export function createI18n(options: I18nPluginOptions): I18nInstance {
     await Promise.all(loads);
   }
 
-  function t(key: string, params?: Record<string, string | number>, count?: number): string {
+  function t(key: ExtractKeys<T>, params?: Record<string, string | number>, count?: number): string {
     // Auto-subscribes to both signals — callers inside effects/JSX update automatically
     const tree = translations();
     const fallback = fallbackTranslations();
 
-    let raw = resolveKey(tree, key);
+    // ExtractKeys<T> is always a subtype of string — widened here for internal resolution
+    const keyStr = key as string;
+
+    let raw = resolveKey(tree, keyStr);
     if (raw === undefined && fallback) {
-      raw = resolveKey(fallback, key);
+      raw = resolveKey(fallback, keyStr);
     }
-    if (raw === undefined) return key;
+    if (raw === undefined) return keyStr;
 
     if (count !== undefined) {
       raw = resolvePlural(raw, count);
@@ -86,5 +91,5 @@ export function createI18n(options: I18nPluginOptions): I18nInstance {
     t,
     _load,
     _loadFallback,
-  };
+  } as I18nInstance<T>;
 }

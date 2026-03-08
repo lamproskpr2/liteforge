@@ -2,6 +2,8 @@ import { createComponent } from 'liteforge';
 import { Link } from 'liteforge/router';
 import { CodeBlock } from '../components/CodeBlock.js';
 import { t } from '../i18n.js';
+import type { ExtractKeys } from 'liteforge/i18n';
+import type { DocsTranslations } from '../locales/en.js';
 
 type BadgeToken = 'violet' | 'blue' | 'emerald' | 'amber';
 
@@ -38,7 +40,7 @@ const PACKAGES: PackageCard[] = [
 ];
 
 // Translation key → package name mapping
-const PKG_DESC_KEY: Record<string, string> = {
+const PKG_DESC_KEY: Record<string, ExtractKeys<DocsTranslations>> = {
   core: 'pkg.core', runtime: 'pkg.runtime', router: 'pkg.router', query: 'pkg.query',
   client: 'pkg.client', form: 'pkg.form', table: 'pkg.table', modal: 'pkg.modal',
   toast: 'pkg.toast', tooltip: 'pkg.tooltip', calendar: 'pkg.calendar',
@@ -183,7 +185,7 @@ export const Overview = createComponent({
                         <span class="font-mono text-xs text-[var(--badge-indigo-text)] group-hover:text-indigo-200 shrink-0">
                           {pkg.label}
                         </span>
-                        <span class="text-xs text-[var(--content-muted)] truncate">{() => t(PKG_DESC_KEY[pkg.name] ?? '')}</span>
+                        <span class="text-xs text-[var(--content-muted)] truncate">{() => t(PKG_DESC_KEY[pkg.name]!)}</span>
                       </div>
                       <span class={`text-[0.65rem] px-1.5 py-0.5 rounded font-medium shrink-0 ml-3 ${BADGE_CLASSES[pkg.token]}`}>
                         {pkg.badge}

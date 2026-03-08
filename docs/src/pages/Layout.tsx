@@ -3,6 +3,8 @@ import { RouterOutlet, Link } from 'liteforge/router';
 import { tooltip } from 'liteforge/tooltip';
 import { themeStore } from '../stores/theme.js';
 import { t, locale, setLocale } from '../i18n.js';
+import type { ExtractKeys } from 'liteforge/i18n';
+import type { DocsTranslations } from '../locales/en.js';
 
 // ─── Lucide icon helper ────────────────────────────────────────────────────────
 
@@ -62,15 +64,17 @@ const IC = {
 
 // ─── Nav data ─────────────────────────────────────────────────────────────────
 
+type DocKey = ExtractKeys<DocsTranslations>;
+
 interface NavLink {
   href: string;
-  labelKey: string;  // key into t('nav.*')
+  labelKey: DocKey;
   icon: IconNode;
 }
 
 interface NavGroup {
   id: string;
-  labelKey: string;  // key into t('nav.*')
+  labelKey: DocKey;
   links: NavLink[];
 }
 

@@ -1,6 +1,6 @@
 {
   "name": "@liteforge/i18n",
-  "version": "2.0.0",
+  "version": "2.1.0",
   "description": "Signals-based internationalization plugin for LiteForge. Lazy-loaded locales, dot-notation keys, interpolation, pluralization, fallback locale.",
   "author": "SchildW3rk <contact@schildw3rk.dev>",
   "license": "MIT",

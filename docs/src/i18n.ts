@@ -9,8 +9,9 @@
  * preventing any flash of untranslated keys.
  */
 import { createI18n } from 'liteforge/i18n';
+import type { DocsTranslations } from './locales/en.js';
 
-export const i18n = createI18n({
+export const i18n = createI18n<DocsTranslations>({
   defaultLocale: 'en',
   fallbackLocale: 'en',
   load: async (locale: string) => {
