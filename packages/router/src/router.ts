@@ -19,6 +19,8 @@ import type {
   MiddlewareContext,
   GuardResult,
   History,
+  TransitionHooks,
+  TransitionContext,
 } from './types.js';
 import {
   compileRoutes,
@@ -52,6 +54,8 @@ export function createRouter(options: RouterOptions): Router {
     lazyDefaults,
     scrollBehavior = 'top',
     titleTemplate,
+    transitions,
+    useViewTransitions = false,
   } = options;
 
   // Set up scroll handlers and disable browser-managed scroll restoration
@@ -116,9 +120,92 @@ export function createRouter(options: RouterOptions): Router {
   }
 
   /**
+   * Get the router outlet element for transition hooks.
+   * Falls back to document.body when no outlet is present in the DOM.
+   */
+  function getOutletElement(): HTMLElement {
+    if (typeof document === 'undefined') return null as unknown as HTMLElement;
+    // RouterOutlet inserts a comment node: <!--router-outlet:0-->
+    // Walk the DOM to find the parent element of that comment node.
+    const iterator = document.createNodeIterator(
+      document.body,
+      NodeFilter.SHOW_COMMENT,
+    );
+    let node: Comment | null;
+    while ((node = iterator.nextNode() as Comment | null) !== null) {
+      if (node.nodeValue?.startsWith('router-outlet:')) {
+        return (node.parentElement ?? document.body) as HTMLElement;
+      }
+    }
+    return document.body;
+  }
+
+  /**
+   * Build a TransitionContext for the current navigation
+   */
+  function buildTransitionContext(
+    to: Location,
+    from: Location | null,
+    isReplace: boolean,
+  ): TransitionContext {
+    return {
+      to,
+      from,
+      direction: isReplace ? 'replace' : 'forward',
+    };
+  }
+
+  // Augmented Document type for the View Transitions API (progressive enhancement)
+  type DocumentWithVT = Document & {
+    startViewTransition?: (cb: () => void) => { ready: Promise<void>; finished: Promise<void> };
+  };
+
+  /**
+   * Commit the DOM update, optionally wrapping it in document.startViewTransition().
+   * Falls back to a plain synchronous call when the API is unavailable.
+   */
+  async function commitWithViewTransition(commitDom: () => void): Promise<void> {
+    const svt = (document as DocumentWithVT).startViewTransition;
+    if (useViewTransitions && typeof document !== 'undefined' && typeof svt === 'function') {
+      await new Promise<void>((resolve) => {
+        svt(() => {
+          commitDom();
+          resolve();
+        });
+      });
+    } else {
+      commitDom();
+    }
+  }
+
+  /**
+   * Run transition hooks around a DOM commit callback.
+   * Handles onBeforeLeave → DOM commit (optionally inside startViewTransition) → onAfterEnter.
+   */
+  async function runTransition(
+    hooks: TransitionHooks,
+    el: HTMLElement,
+    context: TransitionContext,
+    commitDom: () => void,
+  ): Promise<void> {
+    // Phase 1: before-leave
+    if (hooks.onBeforeLeave) {
+      await hooks.onBeforeLeave(el, context);
+    }
+
+    // Phase 2: DOM commit (optionally wrapped in View Transitions API)
+    await commitWithViewTransition(commitDom);
+
+    // Phase 3: after-enter (fire-and-forget to remain non-blocking)
+    if (hooks.onAfterEnter) {
+      void Promise.resolve(hooks.onAfterEnter(el, context));
+    }
+  }
+
+  /**
    * Result type for internal navigation attempt
    */
-  type NavigationAttemptResult = 
+  type NavigationAttemptResult =
     | { type: 'success'; preloadedData: unknown }
     | { type: 'redirect'; target: NavigationTarget }
     | { type: 'blocked' }
@@ -300,10 +387,22 @@ export function createRouter(options: RouterOptions): Router {
           history.push(currentTarget);
         }
 
-        // Update reactive state
+        // Update reactive state — optionally wrapped in transition hooks / View Transition API
         const previousLocation = currentLocation;
         currentLocation = finalTargetLocation;
-        updateState(finalTargetLocation, matched, result.preloadedData);
+
+        const isReplaceNav = replace || redirectCount > 0;
+        const commitDom = () => updateState(finalTargetLocation, matched, result.preloadedData);
+
+        if (transitions) {
+          const el = getOutletElement();
+          const context = buildTransitionContext(finalTargetLocation, previousLocation, isReplaceNav);
+          await runTransition(transitions, el, context, commitDom);
+        } else if (useViewTransitions) {
+          await commitWithViewTransition(commitDom);
+        } else {
+          commitDom();
+        }
 
         // Scroll after navigation (runs in browser environment only)
         if (typeof window !== 'undefined') {

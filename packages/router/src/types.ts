@@ -440,6 +440,8 @@ export interface RouterOptions {
   base?: string;
   /** Transition hooks */
   transitions?: TransitionHooks;
+  /** Wrap DOM updates in document.startViewTransition() when available (default: false) */
+  useViewTransitions?: boolean;
   /** Scroll behavior on navigation */
   scrollBehavior?: ScrollBehavior;
   /** Error handler for navigation failures */

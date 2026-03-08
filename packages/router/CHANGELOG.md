@@ -1,5 +1,28 @@
 # @liteforge/router
 
+## 0.6.0
+
+### Minor Changes
+
+- Implement `transitions` hooks and `useViewTransitions` in the router.
+
+  `TransitionHooks` (`onBeforeLeave`, `onAfterLeave`, `onBeforeEnter`, `onAfterEnter`) are now fully wired — previously defined in types but never called. Pass them via `RouterOptions.transitions`.
+
+  `useViewTransitions: true` wraps every DOM commit in `document.startViewTransition()` with graceful fallback for browsers that don't support the API yet.
+
+  ```ts
+  createRouter({
+    routes,
+    useViewTransitions: true,
+    transitions: {
+      onBeforeLeave: (el, ctx) =>
+        el.animate([{ opacity: 1 }, { opacity: 0 }], 150).finished,
+      onAfterEnter: (el, ctx) =>
+        el.animate([{ opacity: 0 }, { opacity: 1 }], 150),
+    },
+  });
+  ```
+
 ## 0.5.0
 
 ### Minor Changes
