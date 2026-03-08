@@ -1,5 +1,39 @@
 # @liteforge/router
 
+## 0.8.0
+
+### Minor Changes
+
+- **Typed Routes Phase 2 — `navigate(pattern, params)` overload**
+
+  Navigate to parametric routes using the path pattern as key — TypeScript infers the required params object directly from the pattern. No `name` field, no codegen.
+
+  ```ts
+  const routes = [
+    { path: "/users/:id", component: UserDetail },
+    { path: "/posts/:year/:month", component: Archive },
+    { path: "/home", component: Home },
+  ] as const;
+
+  const router = createRouter({ routes, history });
+
+  // Phase 2 — pattern + typed params
+  router.navigate("/users/:id", { id: "42" }); // ✓
+  router.navigate("/posts/:year/:month", { year: "2024", month: "03" }); // ✓
+  router.navigate("/users/:id", { ix: "42" }); // TS Error — wrong key
+  router.navigate("/users/:id"); // TS Error — params required
+  router.navigate("/home", { id: "42" }); // TS Error — no params on /home
+
+  // Phase 1 still works
+  router.navigate("/users/42"); // ✓ — filled path, no params arg
+  ```
+
+  Params are `encodeURIComponent`-encoded. The runtime dispatch uses `/:\w+/.test(path)` as the sole discriminator — the second argument is always treated as params when the path still contains an unfilled segment, eliminating any ambiguity with param names like `replace` or `state`.
+
+  **Known limitation:** Optional params (`:page?`) are treated as required. Full optional param support is planned for Phase 3.
+
+  New type export: `ExtractParamPaths<T>` — filters a routes array to only paths containing at least one `:param` segment.
+
 ## 0.7.0
 
 ### Minor Changes

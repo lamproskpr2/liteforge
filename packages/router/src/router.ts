@@ -468,14 +468,54 @@ export function createRouter<T extends readonly RouteDefinition[]>(
     }
   }
 
+  // ---------------------------------------------------------------------------
+  // Phase 2 helpers — navigate(pattern, params) overload
+  // ---------------------------------------------------------------------------
+
   /**
-   * Navigate to a path or location
+   * Fill :param segments in a path pattern with the provided values.
+   * @throws if a required param is missing from the params object.
+   */
+  function fillPathParams(pattern: string, params: Record<string, string>): string {
+    return pattern.replace(/:([^/]+)/g, (_, key: string) => {
+      const value = params[key];
+      if (value === undefined) throw new Error(`Missing param "${key}" for path "${pattern}"`);
+      return encodeURIComponent(value);
+    });
+  }
+
+  /**
+   * Navigate to a path or location.
+   * Supports three overloads:
+   *   1. navigate(pattern, params, options?) — Phase 2: fill params into pattern
+   *   2. navigate(path, options?)            — Phase 1: typed filled path
+   *   3. navigate(locationObject, options?)  — untyped location object
+   *
+   * Dispatch is determined solely by the first argument: if `target` is a string
+   * that still contains an unfilled :param segment, the second arg is always
+   * treated as a params map — regardless of what keys it contains.
    */
   async function navigate(
     target: NavigationTarget,
-    options: NavigateOptions = {}
+    paramsOrOptions?: Record<string, string> | NavigateOptions,
+    options?: NavigateOptions
   ): Promise<boolean> {
-    return performNavigation(target, options);
+    // Primary discriminator: does the path still contain an unfilled :param segment?
+    if (
+      typeof target === 'string' &&
+      /:\w+/.test(target) &&
+      paramsOrOptions !== null &&
+      paramsOrOptions !== undefined &&
+      typeof paramsOrOptions === 'object'
+    ) {
+      const filled = fillPathParams(target, paramsOrOptions as Record<string, string>);
+      return performNavigation(filled, options ?? {});
+    }
+    // Phase 1 / location object overload
+    return performNavigation(
+      target as NavigationTarget,
+      (paramsOrOptions as NavigateOptions | undefined) ?? {}
+    );
   }
 
   /**
@@ -542,8 +582,25 @@ export function createRouter<T extends readonly RouteDefinition[]>(
     // Navigation methods
     navigate,
 
-    replace(target, options = {}) {
-      return navigate(target, { ...options, replace: true });
+    replace(
+      target: NavigationTarget | string,
+      paramsOrOptions?: Record<string, string> | Omit<NavigateOptions, 'replace'>,
+      options?: Omit<NavigateOptions, 'replace'>
+    ) {
+      // Primary discriminator: does the path still contain an unfilled :param segment?
+      if (
+        typeof target === 'string' &&
+        /:\w+/.test(target) &&
+        paramsOrOptions !== null &&
+        paramsOrOptions !== undefined &&
+        typeof paramsOrOptions === 'object'
+      ) {
+        const filled = fillPathParams(target, paramsOrOptions as Record<string, string>);
+        return navigate(filled, { ...(options ?? {}), replace: true });
+      }
+      // Phase 1 / location object overload
+      const opts = (paramsOrOptions as Omit<NavigateOptions, 'replace'> | undefined) ?? {};
+      return navigate(target as NavigationTarget, { ...opts, replace: true });
     },
 
     back() {

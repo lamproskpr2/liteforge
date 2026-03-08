@@ -505,25 +505,61 @@ export interface Router<T extends readonly RouteDefinition[] = readonly RouteDef
   readonly preloadedData: Signal<unknown>;
 
   /**
+   * Navigate to a parametric route by path pattern with typed params.
+   * TypeScript infers the required params from the path pattern.
+   *
+   * Known limitation: optional params (:param?) are treated as required.
+   * Full optional param support is planned for Phase 3.
+   *
+   * @example
+   * router.navigate('/users/:id', { id: '42' })
+   * router.navigate('/posts/:year/:month', { year: '2024', month: '03' })
+   */
+  navigate<P extends ExtractParamPaths<T>>(
+    path: P,
+    params: TypedParams<P>,
+    options?: NavigateOptions
+  ): Promise<boolean>;
+
+  /**
    * Navigate to a typed path. TypeScript will error if the path string doesn't
    * match any known route pattern. Param segments (:id) accept any string value.
-   *
-   * NOTE: Path-safety only — empty param values like '/users/' still type-check.
-   * For full param-safety, use the named route overload (Phase 2, coming soon):
-   *   navigate('route-name', { params: { id: '42' } })
    *
    * To get typed navigation, pass `routes` with `as const` to createRouter:
    *   createRouter({ routes: [...] as const })
    */
   navigate(path: TypedNavigationTarget<T>, options?: NavigateOptions): Promise<boolean>;
-  /** Navigate with a full location object (always allowed, untyped) */
+
+  /**
+   * Navigate with a full location object (always allowed, untyped).
+   *
+   * @example
+   * router.navigate({ path: '/users/42', query: { tab: 'profile' } })
+   */
   navigate(target: { path: string; query?: QueryParams; hash?: string; state?: unknown }, options?: NavigateOptions): Promise<boolean>;
+
+  /**
+   * Replace current history entry using a parametric route by path pattern with typed params.
+   * TypeScript infers the required params from the path pattern.
+   *
+   * Known limitation: optional params (:param?) are treated as required.
+   * Full optional param support is planned for Phase 3.
+   *
+   * @example
+   * router.replace('/users/:id', { id: '42' })
+   */
+  replace<P extends ExtractParamPaths<T>>(
+    path: P,
+    params: TypedParams<P>,
+    options?: Omit<NavigateOptions, 'replace'>
+  ): Promise<boolean>;
 
   /**
    * Replace current history entry with a typed path.
    * Same path-safety semantics as navigate().
    */
   replace(path: TypedNavigationTarget<T>, options?: Omit<NavigateOptions, 'replace'>): Promise<boolean>;
+
   /** Replace with a full location object (always allowed, untyped) */
   replace(target: { path: string; query?: QueryParams; hash?: string; state?: unknown }, options?: Omit<NavigateOptions, 'replace'>): Promise<boolean>;
   /** Go back in history */
@@ -646,3 +682,14 @@ export type ExtractRoutePaths<T extends readonly RouteDefinition[]> =
  */
 export type TypedNavigationTarget<T extends readonly RouteDefinition[]> =
   FillParams<ExtractRoutePaths<T>>;
+
+/**
+ * Extract only paths that contain at least one :param segment.
+ * Used to constrain the navigate(pattern, params) overload to parametric routes only.
+ *
+ * @example
+ * // routes: ['/core', '/router/:id', '/admin/:section']
+ * // ExtractParamPaths<T> → '/router/:id' | '/admin/:section'
+ */
+export type ExtractParamPaths<T extends readonly RouteDefinition[]> =
+  Extract<ExtractRoutePaths<T>, `${string}:${string}`>;

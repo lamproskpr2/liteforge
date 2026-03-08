@@ -1,5 +1,12 @@
 # @liteforge/admin
 
+## 7.0.0
+
+### Patch Changes
+
+- Updated dependencies
+  - @liteforge/router@0.8.0
+
 ## 6.0.0
 
 ### Patch Changes

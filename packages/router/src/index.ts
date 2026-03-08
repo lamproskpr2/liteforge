@@ -61,6 +61,7 @@ export type {
   FillParams,
   ExtractRoutePaths,
   TypedNavigationTarget,
+  ExtractParamPaths,
 } from './types.js';
 
 // =============================================================================

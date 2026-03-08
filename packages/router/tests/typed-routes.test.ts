@@ -11,6 +11,8 @@ import type {
   FillParams,
   ExtractRoutePaths,
   TypedNavigationTarget,
+  ExtractParamPaths,
+  TypedParams,
   RouteDefinition,
 } from '../src/index.js';
 
@@ -181,5 +183,177 @@ describe('createRouter without as const (non-breaking)', () => {
     expect(result).toBe(true);
 
     router.destroy();
+  });
+});
+
+// =============================================================================
+// Phase 2 — ExtractParamPaths type utility
+// =============================================================================
+
+type Phase2Routes = readonly [
+  { readonly path: '/home' },
+  { readonly path: '/users/:id' },
+  { readonly path: '/posts/:year/:month' },
+];
+
+describe('ExtractParamPaths type utility', () => {
+  it('extracts only paths that contain at least one :param segment', () => {
+    expectTypeOf<ExtractParamPaths<Phase2Routes>>().toEqualTypeOf<
+      '/users/:id' | '/posts/:year/:month'
+    >();
+  });
+
+  it('excludes static paths (no :param segments)', () => {
+    // '/home' must NOT appear in the result
+    expectTypeOf<ExtractParamPaths<Phase2Routes>>().not.toEqualTypeOf<
+      '/home' | '/users/:id' | '/posts/:year/:month'
+    >();
+  });
+
+  it('produces never for routes with no param segments', () => {
+    type StaticOnly = readonly [
+      { readonly path: '/home' },
+      { readonly path: '/about' },
+    ];
+    expectTypeOf<ExtractParamPaths<StaticOnly>>().toEqualTypeOf<never>();
+  });
+
+  it('degrades to never for non-literal routes array', () => {
+    // When routes are not literal-typed, ExtractRoutePaths produces string.
+    // Extract<string, `${string}:${string}`> is string, not never.
+    // This is an edge case — in practice callers always use as const.
+    expectTypeOf<ExtractParamPaths<readonly RouteDefinition[]>>().toEqualTypeOf<string>();
+  });
+});
+
+// =============================================================================
+// Phase 2 — navigate(pattern, params) overload — type-level tests
+// =============================================================================
+
+const PHASE2_ROUTES = [
+  { path: '/home', component: () => document.createElement('div') },
+  { path: '/users/:id', component: () => document.createElement('div') },
+  { path: '/posts/:year/:month', component: () => document.createElement('div') },
+  { path: '*', component: () => document.createElement('div') },
+] as const;
+
+describe('navigate() Phase 2 — path pattern + params — type-level', () => {
+  it('TypedParams infers a single param correctly', () => {
+    expectTypeOf<TypedParams<'/users/:id'>>().toEqualTypeOf<{ id: string }>();
+  });
+
+  it('TypedParams infers multiple params correctly', () => {
+    expectTypeOf<TypedParams<'/posts/:year/:month'>>().toEqualTypeOf<{ year: string; month: string }>();
+  });
+
+  it('navigate(pattern, params) — params arg has the correct type for single param', () => {
+    const router = createRouter({ routes: PHASE2_ROUTES, history: createMemoryHistory() });
+    expectTypeOf(router.navigate<'/users/:id'>).parameter(1).toEqualTypeOf<{ id: string }>();
+    router.destroy();
+  });
+
+  it('navigate(pattern, params) — params arg has the correct type for multiple params', () => {
+    const router = createRouter({ routes: PHASE2_ROUTES, history: createMemoryHistory() });
+    expectTypeOf(router.navigate<'/posts/:year/:month'>).parameter(1)
+      .toEqualTypeOf<{ year: string; month: string }>();
+    router.destroy();
+  });
+
+  it('navigate(pattern) without params is a TS error', () => {
+    const router = createRouter({ routes: PHASE2_ROUTES, history: createMemoryHistory() });
+    // @ts-expect-error — params argument required for parametric routes
+    void router.navigate('/users/:id');
+    router.destroy();
+  });
+
+  it('navigate(static-path, params) is a TS error — /home has no params', () => {
+    const router = createRouter({ routes: PHASE2_ROUTES, history: createMemoryHistory() });
+    // @ts-expect-error — /home is not in ExtractParamPaths, second arg not accepted
+    void router.navigate('/home', { id: '42' });
+    router.destroy();
+  });
+});
+
+// =============================================================================
+// Phase 2 — navigate(pattern, params) overload — runtime tests
+// =============================================================================
+
+describe('navigate() Phase 2 — path pattern + params — runtime', () => {
+  let router: ReturnType<typeof createRouter<typeof PHASE2_ROUTES>>;
+
+  afterEach(() => {
+    router?.destroy();
+  });
+
+  it('fills a single param into the path at runtime', async () => {
+    router = createRouter({ routes: PHASE2_ROUTES, history: createMemoryHistory() });
+    const result = await router.navigate('/users/:id', { id: '99' });
+    expect(result).toBe(true);
+    expect(router.path()).toBe('/users/99');
+  });
+
+  it('fills multiple params into the path at runtime', async () => {
+    router = createRouter({ routes: PHASE2_ROUTES, history: createMemoryHistory() });
+    const result = await router.navigate('/posts/:year/:month', { year: '2024', month: '03' });
+    expect(result).toBe(true);
+    expect(router.path()).toBe('/posts/2024/03');
+  });
+
+  it('encodes params that contain special characters', async () => {
+    router = createRouter({ routes: PHASE2_ROUTES, history: createMemoryHistory() });
+    const result = await router.navigate('/users/:id', { id: 'hello world' });
+    expect(result).toBe(true);
+    expect(router.path()).toBe('/users/hello%20world');
+  });
+
+  it('navigate(pattern, params, options) respects NavigateOptions', async () => {
+    router = createRouter({ routes: PHASE2_ROUTES, history: createMemoryHistory() });
+    // Navigate somewhere first so there is history to replace
+    await router.navigate('/home');
+    const result = await router.navigate('/users/:id', { id: '7' }, { replace: true });
+    expect(result).toBe(true);
+    expect(router.path()).toBe('/users/7');
+  });
+
+  it('replace(pattern, params) fills params and replaces history', async () => {
+    router = createRouter({ routes: PHASE2_ROUTES, history: createMemoryHistory() });
+    await router.navigate('/home');
+    const result = await router.replace('/users/:id', { id: '42' });
+    expect(result).toBe(true);
+    expect(router.path()).toBe('/users/42');
+  });
+
+  it('replace(pattern, params) with multiple params fills all params', async () => {
+    router = createRouter({ routes: PHASE2_ROUTES, history: createMemoryHistory() });
+    await router.navigate('/home');
+    const result = await router.replace('/posts/:year/:month', { year: '2025', month: '12' });
+    expect(result).toBe(true);
+    expect(router.path()).toBe('/posts/2025/12');
+  });
+
+  it('existing Phase 1 navigate(filled-path) still works', async () => {
+    router = createRouter({ routes: PHASE2_ROUTES, history: createMemoryHistory() });
+    const result = await router.navigate('/users/123');
+    expect(result).toBe(true);
+    expect(router.path()).toBe('/users/123');
+  });
+
+  it('existing navigate(locationObject) still works', async () => {
+    router = createRouter({ routes: PHASE2_ROUTES, history: createMemoryHistory() });
+    const result = await router.navigate({ path: '/home', query: { foo: 'bar' } });
+    expect(result).toBe(true);
+    expect(router.path()).toBe('/home');
+    expect(router.query()).toEqual({ foo: 'bar' });
+  });
+
+  it('correctly dispatches when param value is "replace" (edge case for old key-based discriminator)', async () => {
+    // The old isParamsObject() checked second-arg keys for anything other than
+    // 'replace' / 'state'. A param named with value 'replace' would have caused
+    // the dispatch to fall through to the Phase 1 path, leaving the pattern unfilled.
+    // The new /:\w+/.test(target) discriminator uses only the first argument, so
+    // param values of 'replace' or 'state' are handled correctly.
+    router = createRouter({ routes: PHASE2_ROUTES, history: createMemoryHistory() });
+    await router.navigate('/users/:id', { id: 'replace' });
+    expect(router.path()).toBe('/users/replace');
   });
 });
