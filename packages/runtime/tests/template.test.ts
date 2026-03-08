@@ -401,10 +401,30 @@ describe('_setProp', () => {
       // Event handlers starting with 'on' should be added directly
       const handler = vi.fn();
       _setProp(el, 'onClick', handler);
-      
+
       // Should not create an effect, just add the listener
       el.click();
       expect(handler).toHaveBeenCalled();
+    });
+
+    // ── ref prop (regression: was silently broken in template path) ──────────
+    it('ref callback is called immediately with the element', () => {
+      const cb = vi.fn();
+      _setProp(el, 'ref', cb);
+      expect(cb).toHaveBeenCalledOnce();
+      expect(cb).toHaveBeenCalledWith(el);
+    });
+
+    it('ref callback receives the actual HTMLElement, not a string or undefined', () => {
+      let captured: unknown = undefined;
+      _setProp(el, 'ref', (node: unknown) => { captured = node; });
+      expect(captured).toBe(el);
+      expect(captured).toBeInstanceOf(HTMLElement);
+    });
+
+    it('non-function ref value is not called and does not throw', () => {
+      // ref={someStringByMistake} should not throw
+      expect(() => _setProp(el, 'ref', 'not-a-function')).not.toThrow();
     });
   });
 });

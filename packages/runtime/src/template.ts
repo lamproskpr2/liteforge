@@ -190,6 +190,12 @@ export function _setProp(
   name: string,
   value: unknown
 ): void {
+  // ref prop — call immediately with the element (same as h.ts)
+  if (name === 'ref' && typeof value === 'function') {
+    (value as (el: Element) => void)(el);
+    return;
+  }
+
   // Handle reactive values
   if (typeof value === 'function' && !name.startsWith('on')) {
     // It's a getter - create effect
