@@ -18,6 +18,7 @@ A signals-based frontend framework with no virtual DOM, zero external dependenci
 
 | Package | Version | Size (gzip) | Tests | Description |
 |---------|---------|-------------|-------|-------------|
+| [liteforge](packages/liteforge) | 0.7.0 | ~18kb | — | Umbrella package — re-exports `@liteforge/core` + `@liteforge/runtime` |
 | [@liteforge/core](packages/core) | 0.1.0 | ~6kb | 89 | Reactive primitives: signal, computed, effect, batch |
 | [@liteforge/runtime](packages/runtime) | 0.6.2 | ~12kb | 285 | Components, lifecycle, control flow, plugin system |
 | [@liteforge/store](packages/store) | 0.1.0 | ~5kb | 128 | State management with registry and time-travel |
@@ -39,8 +40,12 @@ A signals-based frontend framework with no virtual DOM, zero external dependenci
 ## Architecture
 
 ```
+liteforge         — umbrella (re-exports core + runtime)
+│
 core  (no deps)
 ├── runtime       — components, JSX, control flow, plugin system
+│
+plugins (each installed via .use()):
 ├── store         — global state
 ├── router        — client-side routing
 ├── query         — data fetching
@@ -51,7 +56,7 @@ core  (no deps)
 ├── modal         — modal system
 ├── toast         — toast notifications
 ├── tooltip       — tooltip system
-└── i18n          — internationalization plugin
+└── i18n          — internationalization
 
 vite-plugin       — standalone build transform
 devtools          — depends on core + store
@@ -60,7 +65,7 @@ devtools          — depends on core + store
 ## Quick Start
 
 ```bash
-npm install @liteforge/core @liteforge/runtime @liteforge/vite-plugin
+npm install liteforge @liteforge/vite-plugin
 ```
 
 **vite.config.ts**
@@ -77,7 +82,7 @@ export default defineConfig({
 **main.tsx**
 
 ```tsx
-import { createApp } from '@liteforge/runtime';
+import { createApp } from 'liteforge';
 import { routerPlugin } from '@liteforge/router';
 import { App } from './App.js';
 
@@ -91,7 +96,7 @@ await createApp({ root: App, target: '#app' })
 ### Signals
 
 ```ts
-import { signal, computed, effect } from '@liteforge/core'
+import { signal, computed, effect } from 'liteforge'
 
 const count = signal(0)
 const doubled = computed(() => count() * 2)
@@ -107,7 +112,7 @@ count.update(n => n + 1)
 ### Components
 
 ```tsx
-import { createComponent } from '@liteforge/runtime'
+import { createComponent } from 'liteforge'
 
 const UserProfile = createComponent({
   async load({ props }) {
@@ -131,7 +136,7 @@ const UserProfile = createComponent({
 Plugins are installed via `AppBuilder.use()` before mounting. Each plugin provides typed services that are accessible via `use()` inside components.
 
 ```tsx
-import { createApp } from '@liteforge/runtime';
+import { createApp } from 'liteforge';
 import { routerPlugin } from '@liteforge/router';
 import { modalPlugin } from '@liteforge/modal';
 import { queryPlugin } from '@liteforge/query';
@@ -363,7 +368,7 @@ Key properties:
 ### Control Flow
 
 ```tsx
-import { Show, For, Switch, Match } from '@liteforge/runtime'
+import { Show, For, Switch, Match } from 'liteforge'
 
 <Show when={() => user()}>
   <UserCard user={user} />
