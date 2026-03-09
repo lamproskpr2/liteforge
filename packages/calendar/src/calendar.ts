@@ -103,6 +103,7 @@ export function createCalendar<T extends CalendarEvent>(
     translations: translationsInput,
     toolbar: toolbarConfig,
     responsive: responsiveOptions,
+    virtualization: virtualizationCfg,
   } = options
 
   const t = resolveTranslations(locale, translationsInput)
@@ -423,6 +424,7 @@ export function createCalendar<T extends CalendarEvent>(
             sizeClass,
             activeResource: () => activeResourceSignal(),
             allResources: resourcesInput,
+            ...(virtualizationCfg !== undefined ? { virtualizationCfg } : {}),
           })
           break
 
@@ -453,6 +455,7 @@ export function createCalendar<T extends CalendarEvent>(
             sizeClass,
             activeResource: () => activeResourceSignal(),
             allResources: resourcesInput,
+            ...(virtualizationCfg !== undefined ? { virtualizationCfg } : {}),
           })
           break
 
@@ -477,6 +480,7 @@ export function createCalendar<T extends CalendarEvent>(
             selectable,
             selectionConfig,
             maxAllDayVisible: () => sizeClass() === 'mobile' ? 2 : undefined,
+            ...(virtualizationCfg !== undefined ? { virtualizationCfg } : {}),
           })
           break
 

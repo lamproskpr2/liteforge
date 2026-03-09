@@ -221,6 +221,16 @@ export interface CalendarOptions<T extends CalendarEvent> {
 
   /** UI string translations (default: English) */
   translations?: Partial<CalendarTranslations>
+
+  /** Virtual scroll / windowed rendering (activates above threshold) */
+  virtualization?: {
+    /** Enable virtualization (default: true) */
+    enabled?: boolean
+    /** Min timed-event count before virtualization activates (default: 100) */
+    threshold?: number
+    /** Pre-render buffer in minutes outside visible area (default: 60) */
+    overscanMinutes?: number
+  }
 }
 
 // ─── Calendar Classes ──────────────────────────────────────

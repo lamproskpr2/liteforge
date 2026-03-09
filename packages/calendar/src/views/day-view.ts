@@ -6,7 +6,7 @@
  * With resources: one column per visible resource.
  */
 
-import { effect } from '@liteforge/core'
+import { effect, signal } from '@liteforge/core'
 import type {
   CalendarEvent,
   CalendarTranslations,
@@ -15,6 +15,13 @@ import type {
   CalendarClasses,
   SelectionConfig,
 } from '../types.js'
+import {
+  createScrollHandler,
+  filterEventsByTimeRange,
+  shouldVirtualize,
+  type VirtualizationConfig,
+  type VisibleTimeRange,
+} from '../virtualization.js'
 import {
   getTimeSlots,
   formatFullDate,
@@ -64,6 +71,7 @@ interface DayViewOptions<T extends CalendarEvent> {
   activeResource?: () => string | null
   /** All resources for mobile merged-column label lookup */
   allResources?: Resource[]
+  virtualizationCfg?: VirtualizationConfig
 }
 
 export function renderDayView<T extends CalendarEvent>(
@@ -93,6 +101,7 @@ export function renderDayView<T extends CalendarEvent>(
     sizeClass,
     activeResource,
     allResources: allResourcesList = [],
+    virtualizationCfg,
   } = options
 
   const container = document.createElement('div')
@@ -141,6 +150,36 @@ export function renderDayView<T extends CalendarEvent>(
     }
   }
 
+  // ─── Virtual scroll setup ───────────────────────────────────
+  const fullDayRange: VisibleTimeRange = {
+    startMinutes: config.dayStart * 60,
+    endMinutes: config.dayEnd * 60,
+    overscanMinutes: 0,
+  }
+  const visibleRangeSignal = signal<VisibleTimeRange>(fullDayRange)
+  let scrollHandlerDispose: (() => void) | null = null
+
+  setTimeout(() => {
+    const handler = createScrollHandler(
+      config.dayStart,
+      config.dayEnd,
+      config.slotDuration,
+      virtualizationCfg?.overscanMinutes,
+    )
+    scrollHandlerDispose = handler.dispose
+
+    const onScroll = () => {
+      handler.onScroll(body.scrollTop, body.clientHeight)
+    }
+
+    effect(() => {
+      visibleRangeSignal.set(handler.visibleRange())
+    })
+
+    body.addEventListener('scroll', onScroll, { passive: true })
+    onScroll()
+  }, 0)
+
   // Now indicator reference
   let nowIndicator: (HTMLDivElement & { cleanup?: () => void }) | null = null
 
@@ -160,7 +199,13 @@ export function renderDayView<T extends CalendarEvent>(
 
     // Separate all-day and timed events
     const allDayEvents = allEvents.filter((e) => isAllDayEvent(e))
-    const timedEvents = allEvents.filter((e) => !isAllDayEvent(e))
+    const allTimedEvents = allEvents.filter((e) => !isAllDayEvent(e))
+
+    // Virtual windowing: filter timed events to visible time range
+    const range = visibleRangeSignal()
+    const timedEvents = shouldVirtualize(allTimedEvents.length, virtualizationCfg)
+      ? filterEventsByTimeRange(allTimedEvents, range)
+      : allTimedEvents
 
     // On mobile, merge all resource columns into one
     const isMobile = sizeClass?.() === 'mobile'
@@ -727,6 +772,7 @@ export function renderDayView<T extends CalendarEvent>(
     for (const cleanup of slotSelectionCleanups) {
       cleanup()
     }
+    if (scrollHandlerDispose) scrollHandlerDispose()
     originalRemove()
   }
 

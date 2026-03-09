@@ -2,7 +2,7 @@
  * @liteforge/calendar - Week View Renderer
  */
 
-import { effect } from '@liteforge/core'
+import { effect, signal } from '@liteforge/core'
 import type {
   CalendarEvent,
   CalendarTranslations,
@@ -10,6 +10,13 @@ import type {
   CalendarClasses,
   SelectionConfig,
 } from '../types.js'
+import {
+  createScrollHandler,
+  filterEventsByTimeRange,
+  shouldVirtualize,
+  type VirtualizationConfig,
+  type VisibleTimeRange,
+} from '../virtualization.js'
 import {
   getWeekDays,
   getTimeSlots,
@@ -51,6 +58,7 @@ interface WeekViewOptions<T extends CalendarEvent> {
   selectable: boolean | undefined
   selectionConfig?: SelectionConfig | undefined
   maxAllDayVisible?: () => number | undefined
+  virtualizationCfg?: VirtualizationConfig
 }
 
 export function renderWeekView<T extends CalendarEvent>(
@@ -76,6 +84,7 @@ export function renderWeekView<T extends CalendarEvent>(
     selectable,
     selectionConfig,
     maxAllDayVisible,
+    virtualizationCfg,
   } = options
 
   const container = document.createElement('div')
@@ -126,6 +135,51 @@ export function renderWeekView<T extends CalendarEvent>(
     }
   }
 
+  // ─── Virtual scroll setup ───────────────────────────────────
+  // visibleRangeSignal is always present; when virtualization is inactive it
+  // holds a full-day range so filterEventsByTimeRange passes everything.
+  const fullDayRange: VisibleTimeRange = {
+    startMinutes: config.dayStart * 60,
+    endMinutes: config.dayEnd * 60,
+    overscanMinutes: 0,
+  }
+  const visibleRangeSignal = signal<VisibleTimeRange>(fullDayRange)
+
+  let scrollHandlerDispose: (() => void) | null = null
+
+  // Wire scroll listener once body is in the DOM
+  setTimeout(() => {
+    // Re-evaluate virtualization on every effect run (event count may change)
+    effect(() => {
+      if (scrollHandlerDispose) {
+        scrollHandlerDispose()
+        scrollHandlerDispose = null
+      }
+      // We re-check shouldVirtualize inside the effect so it reacts to event changes
+    })
+
+    const handler = createScrollHandler(
+      config.dayStart,
+      config.dayEnd,
+      config.slotDuration,
+      virtualizationCfg?.overscanMinutes,
+    )
+    scrollHandlerDispose = handler.dispose
+
+    const onScroll = () => {
+      handler.onScroll(body.scrollTop, body.clientHeight)
+    }
+
+    // Propagate visibleRange updates into our local signal
+    effect(() => {
+      visibleRangeSignal.set(handler.visibleRange())
+    })
+
+    body.addEventListener('scroll', onScroll, { passive: true })
+    // Trigger once to capture initial scroll position
+    onScroll()
+  }, 0)
+
   // Now indicator reference
   let nowIndicator: (HTMLDivElement & { cleanup?: () => void }) | null = null
 
@@ -144,7 +198,13 @@ export function renderWeekView<T extends CalendarEvent>(
 
     // Separate all-day and timed events
     const allDayEvents = allEvents.filter((e) => isAllDayEvent(e))
-    const timedEvents = allEvents.filter((e) => !isAllDayEvent(e))
+    const allTimedEvents = allEvents.filter((e) => !isAllDayEvent(e))
+
+    // Virtual windowing: filter timed events to visible time range
+    const range = visibleRangeSignal()
+    const timedEvents = shouldVirtualize(allTimedEvents.length, virtualizationCfg)
+      ? filterEventsByTimeRange(allTimedEvents, range)
+      : allTimedEvents
 
     // Update header
     dayHeaders.innerHTML = ''
@@ -536,6 +596,7 @@ export function renderWeekView<T extends CalendarEvent>(
     for (const cleanup of slotSelectionCleanups) {
       cleanup()
     }
+    if (scrollHandlerDispose) scrollHandlerDispose()
     originalRemove()
   }
 

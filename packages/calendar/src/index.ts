@@ -111,3 +111,14 @@ export {
 
 // Style injection (for advanced usage)
 export { injectCalendarStyles, resetCalendarStylesInjection } from './styles.js'
+
+// Virtualization utilities (exported for advanced usage / testing)
+export {
+  bucketEvents,
+  filterEventsByTimeRange,
+  getEventKey,
+  shouldVirtualize,
+  createScrollHandler,
+  resolveVirtConfig,
+} from './virtualization.js'
+export type { VisibleTimeRange, VirtualizationConfig, EventBucket } from './virtualization.js'
