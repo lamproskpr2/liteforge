@@ -18,21 +18,23 @@ A signals-based frontend framework with no virtual DOM, zero external dependenci
 
 | Package | Version | Size (gzip) | Tests | Description |
 |---------|---------|-------------|-------|-------------|
-| [@liteforge/core](packages/core) | 0.1.0 | ~6kb | 120 | Reactive primitives: signal, computed, effect, batch |
-| [@liteforge/runtime](packages/runtime) | 0.4.2 | ~12kb | 265 | Components, lifecycle, control flow, plugin system |
-| [@liteforge/store](packages/store) | 0.1.0 | ~5kb | 150 | State management with registry and time-travel |
-| [@liteforge/router](packages/router) | 0.3.0 | ~20kb | 359 | Routing with guards, middleware, lazy loading, scroll behavior |
-| [@liteforge/query](packages/query) | 1.0.0 | ~5kb | 73 | Data fetching with caching and mutations |
-| [@liteforge/form](packages/form) | 0.1.0 | ~4kb | 48 | Form management with Zod validation |
-| [@liteforge/table](packages/table) | 0.1.1 | ~8kb | 61 | Data tables with sorting, filtering, pagination |
-| [@liteforge/calendar](packages/calendar) | 0.1.0 | ~22kb | 184 | Scheduling calendar with drag & drop and 4 views |
-| [@liteforge/client](packages/client) | 1.0.0 | ~8kb | 76 | TypeScript-first HTTP client with interceptors and CRUD resources |
-| [@liteforge/modal](packages/modal) | 1.0.0 | ~4kb | 27 | Modal system with focus trap, transitions, and promise presets |
-| [@liteforge/i18n](packages/i18n) | 0.2.0 | ~3kb | 47 | Signals-based i18n with lazy locales, pluralization, and fallback |
-| [@liteforge/vite-plugin](packages/vite-plugin) | 0.4.1 | ~15kb | 275 | JSX transform and build optimization |
-| [@liteforge/devtools](packages/devtools) | 1.0.0 | ~16kb | 100 | Debug panel with 5 tabs and time-travel |
+| [@liteforge/core](packages/core) | 0.1.0 | ~6kb | 89 | Reactive primitives: signal, computed, effect, batch |
+| [@liteforge/runtime](packages/runtime) | 0.6.2 | ~12kb | 285 | Components, lifecycle, control flow, plugin system |
+| [@liteforge/store](packages/store) | 0.1.0 | ~5kb | 128 | State management with registry and time-travel |
+| [@liteforge/router](packages/router) | 0.8.0 | ~20kb | 424 | Routing with guards, lazy loading, typed routes, view transitions |
+| [@liteforge/query](packages/query) | 3.0.0 | ~5kb | 78 | Data fetching with caching and mutations |
+| [@liteforge/form](packages/form) | 0.1.0 | ~4kb | 54 | Form management with Zod validation |
+| [@liteforge/table](packages/table) | 0.2.0 | ~8kb | 72 | Data tables with sorting, filtering, pagination |
+| [@liteforge/calendar](packages/calendar) | 0.3.0 | ~22kb | 202 | Scheduling calendar with drag & drop and 4 views |
+| [@liteforge/client](packages/client) | 3.0.0 | ~8kb | 76 | TypeScript-first HTTP client with interceptors and CRUD resources |
+| [@liteforge/modal](packages/modal) | 3.1.0 | ~4kb | 30 | Modal system with focus trap, transitions, and promise presets |
+| [@liteforge/toast](packages/toast) | 2.0.0 | ~3kb | 39 | Imperative toast notifications with four variants |
+| [@liteforge/tooltip](packages/tooltip) | 0.2.1 | ~2kb | 28 | Portal-based tooltips with auto-positioning and delay |
+| [@liteforge/i18n](packages/i18n) | 2.1.0 | ~3kb | 53 | Signals-based i18n with lazy locales, interpolation, pluralization, typed keys |
+| [@liteforge/vite-plugin](packages/vite-plugin) | 0.4.3 | ~15kb | 350 | JSX transform and build optimization |
+| [@liteforge/devtools](packages/devtools) | 3.0.0 | ~16kb | 51 | Debug panel with 5 tabs and time-travel |
 
-**1,796 tests across all packages.**
+**1,959 tests across all packages.**
 
 ## Architecture
 
@@ -47,6 +49,8 @@ core  (no deps)
 ├── calendar      — scheduling calendar
 ├── client        — HTTP client
 ├── modal         — modal system
+├── toast         — toast notifications
+├── tooltip       — tooltip system
 └── i18n          — internationalization plugin
 
 vite-plugin       — standalone build transform
@@ -260,6 +264,41 @@ const confirmed = await confirm({ title: 'Delete?', message: 'This cannot be und
 await alert({ title: 'Done', message: 'User deleted.' })
 ```
 
+### Toast
+
+```ts
+import { toast } from '@liteforge/toast'
+
+toast.success('Saved successfully')
+toast.error('Something went wrong')
+toast.warning('Unsaved changes')
+toast.info('New version available')
+
+// With options
+toast.success('User created', { duration: 4000, position: 'bottom-right' })
+```
+
+### Tooltip
+
+```ts
+import { tooltip } from '@liteforge/tooltip'
+
+// Imperative — attach to any element
+const cleanup = tooltip(buttonEl, {
+  content: 'Save changes',
+  position: 'top',        // 'top' | 'bottom' | 'left' | 'right'
+  delay: 300,             // ms before showing
+  showWhen: () => !isMobile(),  // reactive guard
+})
+
+// Declarative — JSX component
+import { Tooltip } from '@liteforge/tooltip'
+
+<Tooltip content="Save changes" position="top">
+  <button>Save</button>
+</Tooltip>
+```
+
 ### Internationalization (i18n)
 
 ```bash
@@ -369,7 +408,7 @@ pnpm --filter docs dev
 | Minimal (core only) | ~6kb |
 | Core + Runtime | ~18kb |
 | Core + Runtime + Store + Router | ~43kb |
-| Full stack (+ query + client + modal) | ~60kb |
+| Full stack (+ query + client + modal + toast + tooltip) | ~65kb |
 
 ## Status
 
