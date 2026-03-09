@@ -139,23 +139,33 @@ export function tooltip(el: HTMLElement, input: TooltipInput): () => void {
     }
     if (!tooltipEl) return;
     const dying = tooltipEl;
-    tooltipEl = null; // null immediately so show() can't re-show during fade-out
+    tooltipEl = null;
     dying.classList.remove('lf-tooltip--visible');
-    setTimeout(() => dying.remove(), 160); // wait for CSS opacity transition (150ms)
+    setTimeout(() => dying.remove(), 160);
   };
+
+  const focusEnabled = opts.triggerOnFocus !== false
 
   el.addEventListener('pointerenter', show);
   el.addEventListener('pointerleave', hide);
-  el.addEventListener('focus', show);
-  el.addEventListener('blur', hide);
+  if (focusEnabled) el.addEventListener('focus', show);
+  if (focusEnabled) el.addEventListener('blur', hide);
   el.addEventListener('click', hide);
 
   return () => {
     hide();
     el.removeEventListener('pointerenter', show);
     el.removeEventListener('pointerleave', hide);
-    el.removeEventListener('focus', show);
-    el.removeEventListener('blur', hide);
+    if (focusEnabled) el.removeEventListener('focus', show);
+    if (focusEnabled) el.removeEventListener('blur', hide);
     el.removeEventListener('click', hide);
   };
+}
+
+/**
+ * Immediately remove all visible tooltip elements from the DOM.
+ * Useful when a modal or overlay opens and any lingering tooltip should disappear instantly.
+ */
+export function hideAllTooltips(): void {
+  document.querySelectorAll('.lf-tooltip').forEach((el) => el.remove());
 }

@@ -7,6 +7,8 @@ export interface TooltipOptions {
   offset?: number
   disabled?: boolean
   showWhen?: () => boolean
+  /** Whether focus/blur events trigger the tooltip (default: true) */
+  triggerOnFocus?: boolean
 }
 
 export type TooltipInput = string | TooltipOptions
