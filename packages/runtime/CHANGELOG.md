@@ -1,5 +1,11 @@
 # @liteforge/runtime
 
+## 0.6.4
+
+### Patch Changes
+
+- fix: use createElementNS for SVG tags in h() — enables JSX SVG elements to render correctly in the browser
+
 ## 0.6.3
 
 ### Patch Changes
