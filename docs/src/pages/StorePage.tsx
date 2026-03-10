@@ -9,6 +9,7 @@ import { Button } from '../components/Button.js';
 import { Badge } from '../components/Badge.js';
 import type { ApiRow } from '../components/ApiTable.js';
 import { t } from '../i18n.js';
+import { setToc } from '../toc.js';
 
 // ─── Live example ─────────────────────────────────────────────────────────────
 
@@ -161,26 +162,33 @@ myStore.$restore(snap);             // rewind to that value`;
 
 // ─── API rows ─────────────────────────────────────────────────────────────────
 
-const DEFINE_STORE_API: ApiRow[] = [
-  { name: 'state', type: 'Record<string, unknown>', description: 'Initial state — each key becomes a Signal automatically' },
-  { name: 'getters', type: '(state) => Record<string, () => T>', description: 'Computed values derived from state — memoized, auto-track dependencies' },
-  { name: 'actions', type: '(state) => Record<string, Function>', description: 'Methods that read/write state — can be async' },
-  { name: 'plugins', type: 'StorePlugin[]', description: 'Array of plugins to apply — see defineStorePlugin()' },
-];
+function getDefineStoreApi(): ApiRow[] { return [
+  { name: 'state', type: 'Record<string, unknown>', description: t('store.apiState') },
+  { name: 'getters', type: '(state) => Record<string, () => T>', description: t('store.apiGetters') },
+  { name: 'actions', type: '(state) => Record<string, Function>', description: t('store.apiActions') },
+  { name: 'plugins', type: 'StorePlugin[]', description: t('store.apiPlugins') },
+]; }
 
-const STORE_INSTANCE_API: ApiRow[] = [
-  { name: 'state[key]()', type: 'T', description: 'Read signal value — call in effect/computed to auto-track' },
-  { name: 'state[key].set(v)', type: 'void', description: 'Set signal value directly' },
-  { name: 'state[key].update(fn)', type: 'void', description: 'Update signal value with a transform function' },
-  { name: 'getters[name]()', type: 'T', description: 'Read a computed getter — memoized until dependencies change' },
-  { name: 'actions[name](...)', type: 'void | Promise', description: 'Call an action — can be sync or async' },
-  { name: '$snapshot()', type: 'object', description: 'Get a plain-object snapshot of the current state' },
-  { name: '$restore(snap)', type: 'void', description: 'Restore state from a snapshot (used by devtools time-travel)' },
-];
+function getStoreInstanceApi(): ApiRow[] { return [
+  { name: 'state[key]()', type: 'T', description: t('store.apiStateRead') },
+  { name: 'state[key].set(v)', type: 'void', description: t('store.apiStateSet') },
+  { name: 'state[key].update(fn)', type: 'void', description: t('store.apiStateUpdate') },
+  { name: 'getters[name]()', type: 'T', description: t('store.apiGetterRead') },
+  { name: 'actions[name](...)', type: 'void | Promise', description: t('store.apiActionCall') },
+  { name: '$snapshot()', type: 'object', description: t('store.apiSnapshot') },
+  { name: '$restore(snap)', type: 'void', description: t('store.apiRestore') },
+]; }
 
 export const StorePage = createComponent({
   name: 'StorePage',
   component() {
+    setToc([
+      { id: 'define-store', label: () => t('store.defineStore'),  level: 2 },
+      { id: 'instance',     label: () => t('store.instance'),     level: 2 },
+      { id: 'live',         label: () => t('store.live'),         level: 2 },
+      { id: 'plugins',      label: () => t('store.plugins'),      level: 2 },
+      { id: 'time-travel',  label: () => t('store.timeTravel'),   level: 2 },
+    ]);
     return (
       <div>
         <div class="mb-10">
@@ -200,7 +208,7 @@ export const StorePage = createComponent({
         >
           <div>
             <CodeBlock code={SETUP_CODE} language="typescript" />
-            <ApiTable rows={DEFINE_STORE_API} />
+            <ApiTable rows={() => getDefineStoreApi()} />
           </div>
         </DocSection>
 
@@ -209,7 +217,7 @@ export const StorePage = createComponent({
           id="instance"
           description={() => t('store.instanceDesc')}
         >
-          <ApiTable rows={STORE_INSTANCE_API} />
+          <ApiTable rows={() => getStoreInstanceApi()} />
         </DocSection>
 
         <DocSection

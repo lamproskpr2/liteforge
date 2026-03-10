@@ -7,6 +7,7 @@ import { ApiTable } from '../components/ApiTable.js';
 import type { ApiRow } from '../components/ApiTable.js';
 import { tooltip } from 'liteforge/tooltip';
 import { t } from '../i18n.js';
+import { setToc } from '../toc.js';
 
 // ─── Live examples ─────────────────────────────────────────────────────────────
 
@@ -86,7 +87,7 @@ function ShowWhenExample(): Node {
 
 function CleanupExample(): Node {
   const wrap = document.createElement('div');
-  wrap.className = 'space-y-3';
+  wrap.className = 'flex flex-col gap-3 items-start';
 
   const btn = document.createElement('button');
   btn.textContent = 'Hover me';
@@ -95,12 +96,10 @@ function CleanupExample(): Node {
   let cleanup: (() => void) | null = null;
   const active = signal(true);
 
-  cleanup = tooltip(btn, { content: 'I can be removed', position: 'top' });
-
   const removeBtn = document.createElement('button');
   removeBtn.className = 'px-3 py-1.5 text-sm rounded bg-red-600/80 text-white hover:opacity-80';
   effect(() => {
-    removeBtn.textContent = active() ? 'Remove tooltip' : 'Tooltip removed';
+    removeBtn.textContent = active() ? 'Remove tooltip' : 'Tooltip removed ✓';
     removeBtn.disabled = !active();
   });
   removeBtn.addEventListener('click', () => {
@@ -109,6 +108,10 @@ function CleanupExample(): Node {
 
   wrap.appendChild(btn);
   wrap.appendChild(removeBtn);
+
+  // Attach tooltip after btn is in the DOM tree
+  cleanup = tooltip(btn, { content: 'I can be removed', position: 'top' });
+
   return wrap;
 }
 
@@ -153,14 +156,21 @@ const cleanup = tooltip(el, 'Hello');
 // Remove listeners + hide active tooltip
 cleanup();
 
-// Inside createComponent — use onCleanup:
+// Inside createComponent — use ref callback + onCleanup:
 import { onCleanup } from 'liteforge';
 
 component({ props }) {
-  const el = document.createElement('button');
-  const cleanup = tooltip(el, props.hint);
-  onCleanup(cleanup);  // auto-called on unmount
-  return el;
+  return (
+    <button ref={(el) => {
+      const cleanup = tooltip(el, {
+        content:  props.hint,
+        position: 'top',
+      });
+      onCleanup(cleanup);  // auto-called on unmount
+    }}>
+      {props.label}
+    </button>
+  );
 }`;
 
 const COMPONENT_CODE = `import { Tooltip } from 'liteforge/tooltip';
@@ -188,35 +198,49 @@ tooltip(el, { content: 'I find my own way', position: 'auto' });`;
 
 // ─── API rows ──────────────────────────────────────────────────────────────────
 
-const OPTIONS_API: ApiRow[] = [
-  { name: 'content', type: 'string | Node', description: 'Tooltip text or DOM node to render inside the tooltip' },
-  { name: 'position', type: "'top' | 'right' | 'bottom' | 'left' | 'auto'", default: "'top'", description: "'auto' tries top first and flips to avoid viewport edges" },
-  { name: 'delay', type: 'number', default: '0', description: 'Hover delay before showing in ms — prevents flicker on fast mouse movement' },
-  { name: 'offset', type: 'number', default: '8', description: 'Pixel gap between the target element and the tooltip' },
-  { name: 'disabled', type: 'boolean', default: 'false', description: 'Completely suppress the tooltip — cleanup fn is a noop' },
-  { name: 'showWhen', type: '() => boolean', description: 'Guard function — tooltip only shows when this returns true. Re-checked on every pointerenter.' },
-];
+function getOptionsApi(): ApiRow[] { return [
+  { name: 'content', type: 'string | Node', description: t('tooltip.apiContent') },
+  { name: 'position', type: "'top' | 'right' | 'bottom' | 'left' | 'auto'", default: "'top'", description: t('tooltip.apiPosition') },
+  { name: 'delay', type: 'number', default: '0', description: t('tooltip.apiDelay') },
+  { name: 'offset', type: 'number', default: '8', description: t('tooltip.apiOffset') },
+  { name: 'disabled', type: 'boolean', default: 'false', description: t('tooltip.apiDisabled') },
+  { name: 'showWhen', type: '() => boolean', description: t('tooltip.apiShowWhen') },
+]; }
 
-const FUNC_API: ApiRow[] = [
-  { name: 'tooltip(el, input)', type: '() => void', description: 'Attach tooltip to an HTMLElement. Returns a cleanup function that removes listeners and hides any active tooltip.' },
-  { name: 'positionTooltip(el, target, position, offset)', type: 'void', description: 'Low-level: position a tooltip element relative to a target. Called internally, exposed for custom implementations.' },
-];
+function getFuncApi(): ApiRow[] { return [
+  { name: 'tooltip(el, input)', type: '() => void', description: t('tooltip.apiFnSignature') },
+  { name: 'positionTooltip(el, target, position, offset)', type: 'void', description: t('tooltip.apiFnPositionTooltip') },
+]; }
 
-const COMPONENT_API: ApiRow[] = [
-  { name: 'content', type: 'string | Node', description: 'Tooltip text (required)' },
-  { name: 'position', type: 'TooltipPosition', default: "'top'", description: 'See position option above' },
-  { name: 'delay', type: 'number', description: 'Hover delay in ms' },
-  { name: 'offset', type: 'number', description: 'Gap in px' },
-  { name: 'disabled', type: 'boolean', description: 'Suppress tooltip' },
-  { name: 'showWhen', type: '() => boolean', description: 'Conditional guard' },
-  { name: 'children', type: 'Node', description: 'The element to wrap. Tooltip attaches to firstElementChild.' },
-];
+function getComponentApi(): ApiRow[] { return [
+  { name: 'content', type: 'string | Node', description: t('tooltip.apiCompContent') },
+  { name: 'position', type: 'TooltipPosition', default: "'top'", description: t('tooltip.apiCompPosition') },
+  { name: 'delay', type: 'number', description: t('tooltip.apiCompDelay') },
+  { name: 'offset', type: 'number', description: t('tooltip.apiCompOffset') },
+  { name: 'disabled', type: 'boolean', description: t('tooltip.apiCompDisabled') },
+  { name: 'showWhen', type: '() => boolean', description: t('tooltip.apiCompShowWhen') },
+  { name: 'children', type: 'Node', description: t('tooltip.apiCompChildren') },
+]; }
 
 // ─── Page ──────────────────────────────────────────────────────────────────────
 
 export const TooltipPage = createComponent({
   name: 'TooltipPage',
   component() {
+    setToc([
+      { id: 'basic',         label: () => t('tooltip.basic'),         level: 2 },
+      { id: 'ref',           label: () => t('tooltip.ref'),           level: 2 },
+      { id: 'show-when',     label: () => t('tooltip.showWhen'),      level: 2 },
+      { id: 'delay',         label: () => t('tooltip.delay'),         level: 2 },
+      { id: 'cleanup',       label: () => t('tooltip.cleanup'),       level: 2 },
+      { id: 'gotcha',        label: () => t('tooltip.gotcha'),        level: 2 },
+      { id: 'component',     label: () => t('tooltip.component'),     level: 2 },
+      { id: 'auto',          label: () => t('tooltip.auto'),          level: 2 },
+      { id: 'css',           label: () => t('tooltip.cssVars'),       level: 2 },
+      { id: 'api',           label: () => t('tooltip.api'),           level: 2 },
+      { id: 'options-api',   label: () => t('tooltip.optionsApi'),    level: 3 },
+      { id: 'component-api', label: () => t('tooltip.componentApi'),  level: 3 },
+    ]);
     return (
       <div>
         <div class="mb-10">
@@ -299,15 +323,15 @@ tooltip(btn, 'Save');`} language="typescript" />
         </DocSection>
 
         <DocSection title={() => t('tooltip.api')} id="api">
-          <ApiTable rows={FUNC_API} />
+          <ApiTable rows={() => getFuncApi()} />
         </DocSection>
 
         <DocSection title={() => t('tooltip.optionsApi')} id="options-api">
-          <ApiTable rows={OPTIONS_API} />
+          <ApiTable rows={() => getOptionsApi()} />
         </DocSection>
 
         <DocSection title={() => t('tooltip.componentApi')} id="component-api">
-          <ApiTable rows={COMPONENT_API} />
+          <ApiTable rows={() => getComponentApi()} />
         </DocSection>
       </div>
     );

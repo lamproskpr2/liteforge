@@ -5,6 +5,8 @@ import { themeStore } from '../stores/theme.js';
 import { t, locale, setLocale } from '../i18n.js';
 import type { ExtractKeys } from 'liteforge/i18n';
 import type { DocsTranslations } from '../locales/en.js';
+import { TableOfContents } from '../components/TableOfContents.js';
+import { tocEntries } from '../toc.js';
 
 // ─── Lucide icon helper ────────────────────────────────────────────────────────
 
@@ -609,8 +611,18 @@ export const Layout = createComponent({
             <span class="font-bold text-[var(--content-primary)] text-sm">LiteForge Docs</span>
           </header>
 
-          <main class="px-6 py-10 max-w-3xl mx-auto">
-            {RouterOutlet()}
+          <main class="docs-main">
+            <div class="docs-content">
+              {RouterOutlet()}
+            </div>
+            {() => {
+              const entries = tocEntries();
+              if (entries.length === 0) return null;
+              const col = document.createElement('div');
+              col.className = 'docs-toc-col';
+              col.appendChild(TableOfContents({ entries }));
+              return col;
+            }}
           </main>
         </div>
 

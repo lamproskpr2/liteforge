@@ -1,5 +1,6 @@
 import { createComponent } from 'liteforge';
 import { signal, computed } from 'liteforge';
+import { setToc } from '../toc.js';
 import { t } from '../i18n.js';
 import { DocSection } from '../components/DocSection.js';
 import { CodeBlock } from '../components/CodeBlock.js';
@@ -157,6 +158,15 @@ function getEffectApi(): ApiRow[] { return [
 export const CorePage = createComponent({
   name: 'CorePage',
   component() {
+    setToc([
+      { id: 'how-it-works', label: () => t('core.howItWorks'),    level: 2 },
+      { id: 'signal',       label: () => t('core.signal'),         level: 2 },
+      { id: 'computed',     label: () => t('core.computed'),        level: 2 },
+      { id: 'effect',       label: () => t('core.effect'),          level: 2 },
+      { id: 'batch',        label: () => t('core.batch'),           level: 2 },
+      { id: 'patterns',     label: () => t('core.patterns'),        level: 2 },
+      { id: 'live',         label: () => t('core.liveExample'),     level: 2 },
+    ]);
     return (
       <div>
         {/* Header */}

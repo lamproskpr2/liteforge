@@ -4,6 +4,7 @@ import { CodeBlock } from '../components/CodeBlock.js';
 import { ApiTable } from '../components/ApiTable.js';
 import type { ApiRow } from '../components/ApiTable.js';
 import { t } from '../i18n.js';
+import { setToc } from '../toc.js';
 
 // ─── Code strings ──────────────────────────────────────────────────────────────
 
@@ -131,10 +132,11 @@ const DEBUG_CODE = `// debug: true → exposes window.$lf in the browser console
 await createApp({ root: App, target: '#app', debug: true });
 
 // In DevTools console:
-$lf.stores          // all registered stores
-$lf.router          // current router instance
-$lf.plugins         // all installed plugins
-$lf.signals         // registered signal graph (if @liteforge/devtools installed)
+$lf.stores        // all registered stores by name
+$lf.router        // current router instance
+$lf.context       // full app context (plugins + custom values)
+$lf.snapshot()    // full state snapshot of all stores
+$lf.unmount()     // unmount the app programmatically
 
 // Also enables @liteforge/devtools to connect:
 .useDev(() => import('liteforge/devtools').then(m => m.devtoolsPlugin({
@@ -158,22 +160,25 @@ const builder = createApp({ ... });
 builder.mount();      // starts mount
 builder.use(plugin);  // ← throws: cannot add plugin after mount()`;
 
-const DESTROY_CODE = `// app.destroy() unmounts the component tree and calls all plugin cleanups
+const DESTROY_CODE = `// app.unmount() unmounts the component tree and calls all plugin cleanups
 const app = await createApp({ root: App, target: '#app' })
   .use(routerPlugin(r))
   .mount();
 
 // Later:
-app.destroy();   // router cleanup → modal cleanup → … (reverse order)`;
+app.unmount();   // router cleanup → modal cleanup → … (reverse order)`;
 
 // ─── API rows ──────────────────────────────────────────────────────────────────
 
 function getCreateAppApi(): ApiRow[] { return [
   { name: 'root', type: 'ComponentFactory', description: t('app.apiRoot') },
   { name: 'target', type: 'string | HTMLElement', description: t('app.apiTarget') },
-  { name: 'stores', type: 'StoreDefinition[]', default: '[]', description: t('app.apiStores') },
+  { name: 'stores', type: 'AnyStore[]', default: '[]', description: t('app.apiStores') },
   { name: 'context', type: 'Record<string, unknown>', default: '{}', description: t('app.apiContext') },
   { name: 'debug', type: 'boolean', default: 'false', description: t('app.apiDebug') },
+  { name: 'onReady', type: '(app: AppInstance) => void', description: t('app.apiOnReady') },
+  { name: 'errorComponent', type: 'ErrorComponent', description: t('app.apiErrorComponent') },
+  { name: 'onError', type: 'ErrorHandler', description: t('app.apiOnError') },
 ]; }
 
 function getBuilderApi(): ApiRow[] { return [
@@ -196,7 +201,10 @@ function getPluginCtxApi(): ApiRow[] { return [
 ]; }
 
 function getAppApi(): ApiRow[] { return [
-  { name: 'destroy()', type: 'void', description: t('app.appDestroy') },
+  { name: 'unmount()', type: 'void', description: t('app.appUnmount') },
+  { name: 'use(key)', type: 'T', description: t('app.appUse') },
+  { name: 'stores', type: 'Record<string, AnyStore>', description: t('app.appStores') },
+  { name: 'router?', type: 'RouterLike', description: t('app.appRouter') },
 ]; }
 
 // ─── Page ──────────────────────────────────────────────────────────────────────
@@ -204,6 +212,22 @@ function getAppApi(): ApiRow[] { return [
 export const AppPage = createComponent({
   name: 'AppPage',
   component() {
+    setToc([
+      { id: 'minimal',      label: () => t('app.minimal'),      level: 2 },
+      { id: 'full',         label: () => t('app.full'),         level: 2 },
+      { id: 'plugins',      label: () => t('app.plugins'),      level: 2 },
+      { id: 'use',          label: () => t('app.use'),          level: 2 },
+      { id: 'context',      label: () => t('app.context'),      level: 2 },
+      { id: 'stores',       label: () => t('app.stores'),       level: 2 },
+      { id: 'debug',        label: () => t('app.debug'),        level: 2 },
+      { id: 'thenable',     label: () => t('app.thenable'),     level: 2 },
+      { id: 'destroy',      label: () => t('app.unmount'),      level: 2 },
+      { id: 'api',          label: () => t('app.apiOptions'),   level: 2 },
+      { id: 'builder-api',  label: () => t('app.apiBuilder'),   level: 2 },
+      { id: 'plugin-api',   label: () => t('app.apiPlugin'),    level: 2 },
+      { id: 'plugin-ctx-api', label: () => t('app.apiCtx'),    level: 2 },
+      { id: 'app-api',      label: () => t('app.apiApp'),       level: 2 },
+    ]);
     return (
       <div>
         <div class="mb-10">
@@ -256,8 +280,8 @@ export const AppPage = createComponent({
           <CodeBlock code={THENABLE_CODE} language="typescript" />
         </DocSection>
 
-        <DocSection title={() => t('app.destroy')} id="destroy"
-          description={() => t('app.destroyDesc')}>
+        <DocSection title={() => t('app.unmount')} id="destroy"
+          description={() => t('app.unmountDesc')}>
           <CodeBlock code={DESTROY_CODE} language="typescript" />
         </DocSection>
 

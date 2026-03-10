@@ -4,6 +4,9 @@ export interface DocSectionProps {
   title: string | (() => string);
   description?: string | (() => string);
   id?: string;
+  /** Constrain the title and description to ~740px for readability (default: true).
+   *  Children always render at full width. */
+  proseWidth?: boolean;
   children?: Node | Node[];
 }
 
@@ -14,9 +17,12 @@ function resolve(v: string | (() => string)): string {
 export const DocSection = createComponent<DocSectionProps>({
   name: 'DocSection',
   component({ props }) {
+    const narrow = props.proseWidth !== false;
+    const proseStyle = narrow ? 'max-width:740px' : '';
+
     return (
       <section id={props.id} class="py-8 border-b border-[var(--line-default)] last:border-0">
-        <div class="flex items-center gap-2 mb-2">
+        <div class="flex items-center gap-2 mb-2" style={proseStyle}>
           <h2 class="text-xl font-semibold text-[var(--content-primary)]">{() => resolve(props.title)}</h2>
           {props.id !== undefined
             ? <a
@@ -27,7 +33,7 @@ export const DocSection = createComponent<DocSectionProps>({
             : null}
         </div>
         {props.description !== undefined
-          ? <p class="text-[var(--content-secondary)] text-sm leading-relaxed mb-4">{() => resolve(props.description!)}</p>
+          ? <p class="text-[var(--content-secondary)] text-sm leading-relaxed mb-4" style={proseStyle}>{() => resolve(props.description!)}</p>
           : null}
         {props.children}
       </section>

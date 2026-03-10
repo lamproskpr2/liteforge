@@ -7,6 +7,7 @@ import { LiveExample } from '../components/LiveExample.js';
 import { btnClass } from '../components/Button.js';
 import type { ApiRow } from '../components/ApiTable.js';
 import { t } from '../i18n.js';
+import { setToc } from '../toc.js';
 
 // ─── Live example ──────────────────────────────────────────────────────────────
 
@@ -297,17 +298,26 @@ const FETCH_DEMO_CODE = `const FetchDemo = ${_cc}({
 
 // ─── API rows ──────────────────────────────────────────────────────────────────
 
-const CLIENT_API: ApiRow[] = [
-  { name: 'baseUrl', type: 'string', description: 'Base URL prepended to all request paths' },
-  { name: 'headers', type: 'Record<string, string>', default: '{}', description: 'Default headers merged into every request' },
-  { name: 'timeout', type: 'number', default: '30000', description: 'Request timeout in milliseconds' },
-  { name: 'retry', type: 'number', default: '0', description: 'Number of retries on 5xx or network errors (exponential backoff)' },
-  { name: 'query', type: '{ createQuery, createMutation }', default: 'undefined', description: 'Pass to get QueryClient — resource() returns QueryResource with use* methods' },
-];
+function getClientApi(): ApiRow[] { return [
+  { name: 'baseUrl', type: 'string', description: t('client.apiBaseUrl') },
+  { name: 'headers', type: 'Record<string, string>', default: '{}', description: t('client.apiHeaders') },
+  { name: 'timeout', type: 'number', default: '30000', description: t('client.apiTimeout') },
+  { name: 'retry', type: 'number', default: '0', description: t('client.apiRetry') },
+  { name: 'query', type: '{ createQuery, createMutation }', default: 'undefined', description: t('client.apiQuery') },
+]; }
 
 export const ClientPage = createComponent({
   name: 'ClientPage',
   component() {
+    setToc([
+      { id: 'contrast',      label: () => t('client.progressiveDx'),  level: 2 },
+      { id: 'create-client', label: () => t('client.createClient'),   level: 2 },
+      { id: 'resource',      label: () => t('client.resource'),       level: 2 },
+      { id: 'query-client',  label: () => t('client.queryClient'),    level: 2 },
+      { id: 'errors',        label: () => t('client.errors'),         level: 2 },
+      { id: 'interceptors',  label: () => t('client.interceptors'),   level: 2 },
+      { id: 'middleware',    label: () => t('client.middleware'),      level: 2 },
+    ]);
     return (
       <div>
         <div class="mb-10">
@@ -335,7 +345,7 @@ export const ClientPage = createComponent({
         >
           <div>
             <CodeBlock code={SETUP_CODE} language="typescript" />
-            <ApiTable rows={CLIENT_API} />
+            <ApiTable rows={() => getClientApi()} />
           </div>
         </DocSection>
 

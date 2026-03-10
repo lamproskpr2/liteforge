@@ -1,5 +1,4 @@
-import { createComponent } from 'liteforge';
-import { signal } from 'liteforge';
+import { createComponent, signal, effect } from 'liteforge';
 import { createQuery } from 'liteforge/query';
 import { DocSection } from '../components/DocSection.js';
 import { CodeBlock } from '../components/CodeBlock.js';
@@ -7,6 +6,7 @@ import { LiveExample } from '../components/LiveExample.js';
 import { ApiTable } from '../components/ApiTable.js';
 import type { ApiRow } from '../components/ApiTable.js';
 import { t } from '../i18n.js';
+import { setToc } from '../toc.js';
 
 // ─── Live example ─────────────────────────────────────────────────────────────
 
@@ -38,43 +38,39 @@ function QueryExample(): Node {
 
   const label = document.createElement('span');
   label.className = 'text-xs text-[var(--content-muted)] font-mono';
+  effect(() => { label.textContent = `post #${postId()}`; });
 
-  import('liteforge').then(({ effect }) => {
-    effect(() => { label.textContent = `post #${postId()}`; });
+  const status = document.createElement('div');
+  status.className = 'text-xs font-medium px-2 py-0.5 rounded-full inline-block';
 
-    const status = document.createElement('div');
-    status.className = 'text-xs font-medium px-2 py-0.5 rounded-full inline-block';
+  const content = document.createElement('div');
+  content.className = 'p-3 rounded border border-[var(--line-default)] bg-[var(--surface-raised)]/50 text-sm text-[var(--content-secondary)] min-h-16';
 
-    const content = document.createElement('div');
-    content.className = 'p-3 rounded border border-[var(--line-default)] bg-[var(--surface-raised)]/50 text-sm text-[var(--content-secondary)] min-h-16';
-
-    effect(() => {
-      if (post.isLoading()) {
-        status.className = 'text-xs font-medium px-2 py-0.5 rounded-full inline-block bg-yellow-950 text-yellow-300';
-        status.textContent = 'Loading…';
-        content.textContent = '…';
-      } else if (post.error() !== undefined) {
-        status.className = 'text-xs font-medium px-2 py-0.5 rounded-full inline-block bg-red-950 text-red-300';
-        status.textContent = 'Error';
-        content.textContent = post.error()?.message ?? 'Unknown error';
-      } else {
-        status.className = 'text-xs font-medium px-2 py-0.5 rounded-full inline-block bg-emerald-950 text-emerald-300';
-        status.textContent = 'Cached';
-        const p = post.data();
-        if (p !== undefined) {
-          content.textContent = `"${(p as { title: string }).title}"`;
-        }
+  effect(() => {
+    if (post.isLoading()) {
+      status.className = 'text-xs font-medium px-2 py-0.5 rounded-full inline-block bg-yellow-950 text-yellow-300';
+      status.textContent = 'Loading…';
+      content.textContent = '…';
+    } else if (post.error() !== undefined) {
+      status.className = 'text-xs font-medium px-2 py-0.5 rounded-full inline-block bg-red-950 text-red-300';
+      status.textContent = 'Error';
+      content.textContent = post.error()?.message ?? 'Unknown error';
+    } else {
+      status.className = 'text-xs font-medium px-2 py-0.5 rounded-full inline-block bg-emerald-950 text-emerald-300';
+      status.textContent = 'Cached';
+      const p = post.data();
+      if (p !== undefined) {
+        content.textContent = `"${(p as { title: string }).title}"`;
       }
-    });
-
-    wrap.appendChild(status);
-    wrap.appendChild(content);
+    }
   });
 
   nav.appendChild(prev);
   nav.appendChild(next);
   nav.appendChild(label);
-  wrap.insertBefore(nav, wrap.firstChild);
+  wrap.appendChild(nav);
+  wrap.appendChild(status);
+  wrap.appendChild(content);
   return wrap;
 }
 
@@ -170,21 +166,28 @@ const post = createQuery({
 
 // ─── API rows ─────────────────────────────────────────────────────────────────
 
-const QUERY_API: ApiRow[] = [
-  { name: 'key', type: 'string | unknown[] | () => unknown[]', description: 'Cache key. Use a function to make it reactive — changes trigger refetch' },
-  { name: 'fn', type: '() => Promise<T>', description: 'Async fetch function — called when cache is empty or stale' },
-  { name: 'staleTime', type: 'number', default: '0', description: 'Milliseconds before cached data is considered stale' },
-  { name: 'enabled', type: 'boolean | () => boolean', default: 'true', description: 'Set to false to prevent fetching' },
-];
+function getQueryApi(): ApiRow[] { return [
+  { name: 'key', type: 'string | unknown[] | () => unknown[]', description: t('query.apiKey') },
+  { name: 'fn', type: '() => Promise<T>', description: t('query.apiFn') },
+  { name: 'staleTime', type: 'number', default: '0', description: t('query.apiStaleTime') },
+  { name: 'enabled', type: 'boolean | () => boolean', default: 'true', description: t('query.apiEnabled') },
+]; }
 
-const MUTATION_API: ApiRow[] = [
-  { name: 'fn', type: '(variables: TVariables) => Promise<TData>', description: 'The mutation function — receives variables and returns a promise' },
-  { name: 'invalidate', type: 'string[]', default: '[]', description: 'Query keys to invalidate after successful mutation' },
-];
+function getMutationApi(): ApiRow[] { return [
+  { name: 'fn', type: '(variables: TVariables) => Promise<TData>', description: t('query.apiMutationFn') },
+  { name: 'invalidate', type: 'string[]', default: '[]', description: t('query.apiInvalidate') },
+]; }
 
 export const QueryPage = createComponent({
   name: 'QueryPage',
   component() {
+    setToc([
+      { id: 'problem',       label: () => t('query.problem'),        level: 2 },
+      { id: 'create-query',  label: () => t('query.createQuery'),    level: 2 },
+      { id: 'reactive-keys', label: () => t('query.reactiveKeys'),   level: 2 },
+      { id: 'mutation',      label: () => t('query.createMutation'), level: 2 },
+      { id: 'live',          label: () => t('query.live'),           level: 2 },
+    ]);
     return (
       <div>
         <div class="mb-10">
@@ -214,7 +217,7 @@ export const QueryPage = createComponent({
         >
           <div>
             <CodeBlock code={QUERY_CODE} language="typescript" />
-            <ApiTable rows={QUERY_API} />
+            <ApiTable rows={() => getQueryApi()} />
           </div>
         </DocSection>
 
@@ -233,7 +236,7 @@ export const QueryPage = createComponent({
         >
           <div>
             <CodeBlock code={MUTATION_CODE} language="typescript" />
-            <ApiTable rows={MUTATION_API} />
+            <ApiTable rows={() => getMutationApi()} />
           </div>
         </DocSection>
 

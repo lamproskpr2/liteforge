@@ -1,6 +1,7 @@
 import { createApp } from 'liteforge';
 import { createBrowserHistory, createRouter } from 'liteforge/router';
 import { ModalProvider } from 'liteforge/modal';
+import { ToastProvider } from 'liteforge/toast';
 import { routes } from './router';
 import { App } from './App';
 import { initTheme } from './stores/theme';
@@ -24,6 +25,7 @@ const router = createRouter({
 });
 
 document.body.appendChild(ModalProvider());
+document.body.appendChild(ToastProvider({ position: 'bottom-right' }));
 
 await createApp({
   root: App,

@@ -7,6 +7,7 @@ import { LiveExample } from '../components/LiveExample.js';
 import { ApiTable } from '../components/ApiTable.js';
 import type { ApiRow } from '../components/ApiTable.js';
 import { t } from '../i18n.js';
+import { setToc } from '../toc.js';
 
 // ─── Sample data ───────────────────────────────────────────────────────────────
 
@@ -234,41 +235,52 @@ const TAILWIND_CODE = `const table = createTable<Patient>({
   },
 });`;
 
-const TABLE_API: ApiRow[] = [
-  { name: 'data', type: '() => T[]', description: 'Data source — reactive function, re-renders when signal changes' },
-  { name: 'columns', type: 'ColumnDef<T>[]', description: 'Column definitions — key, header, sortable, custom cell renderer' },
-  { name: 'pagination', type: '{ pageSize: number }', description: 'Enable pagination with given page size' },
-  { name: 'selection', type: "{ enabled: boolean, mode: 'single' | 'multi' }", description: 'Row selection mode' },
-  { name: 'filters', type: 'FilterDef[]', description: 'Text, select, boolean, or number-range filter definitions' },
-  { name: 'styles', type: 'TableStyles', description: 'Per-instance CSS variable overrides — Layer 2' },
-  { name: 'classes', type: 'Partial<TableClasses>', description: 'Class overrides per element for Tailwind etc. — Layer 3' },
-  { name: 'unstyled', type: 'boolean', description: 'Disable all default CSS injection — Layer 0' },
-];
+function getTableApi(): ApiRow[] { return [
+  { name: 'data', type: '() => T[]', description: t('table.apiData') },
+  { name: 'columns', type: 'ColumnDef<T>[]', description: t('table.apiColumns') },
+  { name: 'pagination', type: '{ pageSize: number }', description: t('table.apiPagination') },
+  { name: 'selection', type: "{ enabled: boolean, mode: 'single' | 'multi' }", description: t('table.apiSelection') },
+  { name: 'filters', type: 'FilterDef[]', description: t('table.apiFilters') },
+  { name: 'styles', type: 'TableStyles', description: t('table.apiStyles') },
+  { name: 'classes', type: 'Partial<TableClasses>', description: t('table.apiClasses') },
+  { name: 'unstyled', type: 'boolean', description: t('table.apiUnstyled') },
+]; }
 
-const STYLE_TOKENS_API: ApiRow[] = [
-  { name: 'bg', type: 'string', description: '--lf-table-bg — table surface background' },
-  { name: 'border', type: 'string', description: '--lf-table-border — border color' },
-  { name: 'borderRadius', type: 'string', description: '--lf-table-border-radius — corner radius' },
-  { name: 'headerBg', type: 'string', description: '--lf-table-header-bg — header row background' },
-  { name: 'headerColor', type: 'string', description: '--lf-table-header-color — header text color' },
-  { name: 'headerFontWeight', type: 'string', description: '--lf-table-header-font-weight' },
-  { name: 'rowBg', type: 'string', description: '--lf-table-row-bg — default row background' },
-  { name: 'rowBgHover', type: 'string', description: '--lf-table-row-bg-hover — row hover background' },
-  { name: 'rowBgSelected', type: 'string', description: '--lf-table-row-bg-selected — selected row background' },
-  { name: 'rowBgStriped', type: 'string', description: '--lf-table-row-bg-striped — odd row striping' },
-  { name: 'cellPadding', type: 'string', description: '--lf-table-cell-padding' },
-  { name: 'cellColor', type: 'string', description: '--lf-table-cell-color — cell text color' },
-  { name: 'cellFontSize', type: 'string', description: '--lf-table-cell-font-size' },
-  { name: 'accentColor', type: 'string', description: '--lf-table-sort-icon-active — sort icon + focus accent' },
-  { name: 'sortIconColor', type: 'string', description: '--lf-table-sort-icon-color — inactive sort icon' },
-  { name: 'paginationBg', type: 'string', description: '--lf-table-pagination-bg — pagination footer background' },
-  { name: 'searchBorder', type: 'string', description: '--lf-table-search-border' },
-  { name: 'searchFocus', type: 'string', description: '--lf-table-search-focus — search input focus ring' },
-];
+function getStyleTokensApi(): ApiRow[] { return [
+  { name: 'bg', type: 'string', description: t('table.styleBg') },
+  { name: 'border', type: 'string', description: t('table.styleBorder') },
+  { name: 'borderRadius', type: 'string', description: t('table.styleBorderRadius') },
+  { name: 'headerBg', type: 'string', description: t('table.styleHeaderBg') },
+  { name: 'headerColor', type: 'string', description: t('table.styleHeaderColor') },
+  { name: 'headerFontWeight', type: 'string', description: t('table.styleHeaderFontWeight') },
+  { name: 'rowBg', type: 'string', description: t('table.styleRowBg') },
+  { name: 'rowBgHover', type: 'string', description: t('table.styleRowBgHover') },
+  { name: 'rowBgSelected', type: 'string', description: t('table.styleRowBgSelected') },
+  { name: 'rowBgStriped', type: 'string', description: t('table.styleRowBgStriped') },
+  { name: 'cellPadding', type: 'string', description: t('table.styleCellPadding') },
+  { name: 'cellColor', type: 'string', description: t('table.styleCellColor') },
+  { name: 'cellFontSize', type: 'string', description: t('table.styleCellFontSize') },
+  { name: 'accentColor', type: 'string', description: t('table.styleAccentColor') },
+  { name: 'sortIconColor', type: 'string', description: t('table.styleSortIconColor') },
+  { name: 'paginationBg', type: 'string', description: t('table.stylePaginationBg') },
+  { name: 'searchBorder', type: 'string', description: t('table.styleSearchBorder') },
+  { name: 'searchFocus', type: 'string', description: t('table.styleSearchFocus') },
+]; }
 
 export const TablePage = createComponent({
   name: 'TablePage',
   component() {
+    setToc([
+      { id: 'create-table', label: () => t('table.createTable'),  level: 2 },
+      { id: 'columns',      label: () => t('table.columns'),      level: 2 },
+      { id: 'filters',      label: () => t('table.filters'),      level: 2 },
+      { id: 'selection',    label: () => t('table.selection'),    level: 2 },
+      { id: 'state',        label: () => t('table.state'),        level: 2 },
+      { id: 'styling',      label: () => t('table.styling'),      level: 2 },
+      { id: 'style-tokens', label: () => t('table.styleTokens'),  level: 3 },
+      { id: 'live',         label: () => t('table.live'),         level: 2 },
+      { id: 'tailwind',     label: () => t('table.tailwind'),     level: 2 },
+    ]);
     return (
       <div>
         <div class="mb-10">
@@ -288,7 +300,7 @@ export const TablePage = createComponent({
         >
           <div>
             <CodeBlock code={SETUP_CODE} language="tsx" />
-            <ApiTable rows={TABLE_API} />
+            <ApiTable rows={() => getTableApi()} />
           </div>
         </DocSection>
 
@@ -334,10 +346,10 @@ export const TablePage = createComponent({
               The table uses a 3-layer cascade. Each layer is independent and composable:
             </p>
             <ApiTable rows={[
-              { name: 'unstyled: true', type: 'Layer 0', description: 'No CSS injected at all — full control for custom design systems' },
-              { name: '(automatic)', type: 'Layer 1', description: 'Default theme via CSS custom properties — works out of the box' },
-              { name: 'styles: {}', type: 'Layer 2', description: 'Per-instance token overrides — inline CSS vars scoped to that table only' },
-              { name: 'classes: {}', type: 'Layer 3', description: 'Class overrides per element — Tailwind utility classes, BEM variants, etc.' },
+              { name: 'unstyled: true', type: 'Layer 0', description: t('table.layer0') },
+              { name: '(automatic)', type: 'Layer 1', description: t('table.layer1') },
+              { name: 'styles: {}', type: 'Layer 2', description: t('table.layer2') },
+              { name: 'classes: {}', type: 'Layer 3', description: t('table.layer3') },
             ] as ApiRow[]} />
           </div>
         </DocSection>
@@ -348,7 +360,7 @@ export const TablePage = createComponent({
           description={() => t('table.styleTokensDesc')}
         >
           <div>
-            <ApiTable rows={STYLE_TOKENS_API} />
+            <ApiTable rows={() => getStyleTokensApi()} />
           </div>
         </DocSection>
 

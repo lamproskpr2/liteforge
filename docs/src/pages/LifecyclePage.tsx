@@ -5,6 +5,7 @@ import { LiveExample } from '../components/LiveExample.js';
 import { ApiTable } from '../components/ApiTable.js';
 import type { ApiRow } from '../components/ApiTable.js';
 import { t } from '../i18n.js';
+import { setToc } from '../toc.js';
 
 // ─── Live example: lifecycle log ───────────────────────────────────────────────
 
@@ -161,7 +162,7 @@ createComponent()
 // ─── Code strings ──────────────────────────────────────────────────────────────
 
 const _cc = 'createComponent';
-const FULL_CODE = `import { ${_cc}, onCleanup, onMount, onUnmount } from 'liteforge';
+const FULL_CODE = `import { ${_cc}, onCleanup } from 'liteforge';
 
 export const MyWidget = ${_cc}({
   name: 'MyWidget',
@@ -228,81 +229,65 @@ component() {
 }`;
 
 const TOOLTIP_CLEANUP_CODE = `// Real-world pattern: tooltip ref-callback + onCleanup
+import { onCleanup } from 'liteforge';
 import { tooltip } from 'liteforge/tooltip';
 
 component({ props }) {
-  const el = document.createElement('button');
-  el.textContent = props.label;
-
-  // tooltip() returns a cleanup function
-  const cleanupTooltip = tooltip(el, {
-    content:  props.hint,
-    position: 'right',
-    delay:    150,
-  });
-
-  // Cleanup is called automatically when the component unmounts
-  onCleanup(cleanupTooltip);
-
-  return el;
-}`;
-
-const MOUNT_UNMOUNT_CODE = `// onMount() and onUnmount() — convenience wrappers
-// Equivalent to mounted() / destroyed() lifecycle hooks
-// but callable from inside component() or nested functions.
-
-import { onMount, onUnmount } from 'liteforge';
-
-component() {
-  const chart = createChart();
-
-  onMount(() => {
-    chart.resize();        // safe to access DOM here
-    chart.startAnimation();
-  });
-
-  onUnmount(() => {
-    chart.destroy();       // release resources
-  });
-
-  return <div ref={el => chart.attach(el)} />;
+  return (
+    <button ref={(el) => {
+      const cleanup = tooltip(el, {
+        content:  props.hint,
+        position: 'right',
+        delay:    150,
+      });
+      onCleanup(cleanup);
+    }}>
+      {props.label}
+    </button>
+  );
 }`;
 
 const DIFF_CODE = `// onCleanup  — effect-scoped, runs on every re-run + unmount
-// onUnmount  — component-scoped, runs only once on unmount
+// destroyed() — component-scoped hook, runs only once on unmount
 
 effect(() => {
   const sub = store.subscribe(handler);
   onCleanup(() => sub.unsubscribe());  // ← re-run safe
 });
 
-onUnmount(() => {
-  analytics.trackPageLeave();          // ← once only
-});`;
+// destroyed() { analytics.trackPageLeave(); }  ← once only`;
 
 // ─── API rows ──────────────────────────────────────────────────────────────────
 
-const HOOKS_API: ApiRow[] = [
-  { name: 'setup({ props, use })', type: 'object', description: "Runs once before the DOM is built. Return signals, queries, and derived state. Receives component props and the use() injection function." },
-  { name: 'load({ props, setup, use })', type: 'Promise<object>', description: "Optional async data fetch. Component shows placeholder until resolved. Return value merges into data object passed to component()." },
-  { name: 'placeholder()', type: 'Node', description: "Rendered while load() is pending. Replaced by component() output once load resolves." },
-  { name: 'error({ error, retry })', type: 'Node', description: "Rendered if load() rejects. retry() re-runs load()." },
-  { name: 'component({ props, setup, data })', type: 'Node', description: "Main render function. Called once — reactivity is driven by effects and signals, not re-renders." },
-  { name: 'mounted({ el })', type: 'void', description: "Called after component() output is attached to the live DOM. el is the root element. Safe to measure, focus, animate." },
-  { name: 'destroyed()', type: 'void', description: "Called when the component is removed from the DOM." },
-];
+function getHooksApi(): ApiRow[] { return [
+  { name: 'setup({ props, use })', type: 'object', description: t('lifecycle.apiSetup') },
+  { name: 'load({ props, setup, use })', type: 'Promise<object>', description: t('lifecycle.apiLoad') },
+  { name: 'placeholder()', type: 'Node', description: t('lifecycle.apiPlaceholder') },
+  { name: 'error({ error, retry })', type: 'Node', description: t('lifecycle.apiError') },
+  { name: 'component({ props, setup, data })', type: 'Node', description: t('lifecycle.apiComponent') },
+  { name: 'mounted({ el })', type: 'void', description: t('lifecycle.apiMounted') },
+  { name: 'destroyed()', type: 'void', description: t('lifecycle.apiDestroyed') },
+]; }
 
-const UTILS_API: ApiRow[] = [
-  { name: 'onCleanup(fn)', type: 'void', description: "Register a cleanup function inside an effect. Runs before each re-run and on component destroy. Must be called synchronously inside an effect or lifecycle hook." },
-  { name: 'onMount(fn)', type: 'void', description: "Register a function to run after the component is attached to the DOM. Equivalent to the mounted() hook, but callable from component()." },
-  { name: 'onUnmount(fn)', type: 'void', description: "Register a function to run when the component is removed. Equivalent to destroyed(), but callable from component()." },
-];
+function getUtilsApi(): ApiRow[] { return [
+  { name: 'onCleanup(fn)', type: 'void', description: t('lifecycle.apiOnCleanup') },
+]; }
 
 // ─── Page ──────────────────────────────────────────────────────────────────────
 
 export const LifecyclePage = createComponent({
   name: 'LifecyclePage',
   component() {
+    setToc([
+      { id: 'diagram',         label: () => t('lifecycle.diagram'),        level: 2 },
+      { id: 'full',            label: () => t('lifecycle.fullExample'),    level: 2 },
+      { id: 'demo',            label: () => t('lifecycle.demo'),           level: 2 },
+      { id: 'oncleanup',       label: () => t('lifecycle.onCleanup'),      level: 2 },
+      { id: 'tooltip-cleanup', label: () => t('lifecycle.tooltipCleanup'), level: 3 },
+      { id: 'diff',            label: () => t('lifecycle.cleanupVsDestroyed'), level: 2 },
+      { id: 'api',             label: () => t('lifecycle.hooks'),          level: 2 },
+      { id: 'utils-api',       label: () => t('lifecycle.utils'),          level: 3 },
+    ]);
     return (
       <div>
         <div class="mb-10">
@@ -339,13 +324,8 @@ export const LifecyclePage = createComponent({
           <CodeBlock code={TOOLTIP_CLEANUP_CODE} language="typescript" />
         </DocSection>
 
-        <DocSection title={() => t('lifecycle.mountUnmount')} id="mount-unmount"
-          description={() => t('lifecycle.mountUnmountDesc')}>
-          <CodeBlock code={MOUNT_UNMOUNT_CODE} language="typescript" />
-        </DocSection>
-
-        <DocSection title={() => t('lifecycle.cleanupVsUnmount')} id="diff"
-          description={() => t('lifecycle.cleanupVsUnmountDesc')}>
+        <DocSection title={() => t('lifecycle.cleanupVsDestroyed')} id="diff"
+          description={() => t('lifecycle.cleanupVsDestroyedDesc')}>
           <CodeBlock code={DIFF_CODE} language="typescript" />
           <div class="mt-3 overflow-x-auto">
             <table class="w-full text-sm border-collapse">
@@ -362,15 +342,10 @@ export const LifecyclePage = createComponent({
                   <td class="py-2 pr-4 text-[var(--content-secondary)]">Effect</td>
                   <td class="py-2 text-[var(--content-secondary)]">Before each effect re-run + on unmount</td>
                 </tr>
-                <tr class="border-b border-[var(--line-default)]/50">
-                  <td class="py-2 pr-4 font-mono text-xs text-indigo-400">onUnmount()</td>
-                  <td class="py-2 pr-4 text-[var(--content-secondary)]">Component</td>
-                  <td class="py-2 text-[var(--content-secondary)]">Once, when component is removed from DOM</td>
-                </tr>
                 <tr>
                   <td class="py-2 pr-4 font-mono text-xs text-indigo-400">destroyed()</td>
                   <td class="py-2 pr-4 text-[var(--content-secondary)]">Component</td>
-                  <td class="py-2 text-[var(--content-secondary)]">Same as onUnmount — hook-style declaration</td>
+                  <td class="py-2 text-[var(--content-secondary)]">Once, when component is removed from DOM</td>
                 </tr>
               </tbody>
             </table>
@@ -378,11 +353,11 @@ export const LifecyclePage = createComponent({
         </DocSection>
 
         <DocSection title={() => t('lifecycle.hooks')} id="api">
-          <ApiTable rows={HOOKS_API} />
+          <ApiTable rows={() => getHooksApi()} />
         </DocSection>
 
         <DocSection title={() => t('lifecycle.utils')} id="utils-api">
-          <ApiTable rows={UTILS_API} />
+          <ApiTable rows={() => getUtilsApi()} />
         </DocSection>
       </div>
     );

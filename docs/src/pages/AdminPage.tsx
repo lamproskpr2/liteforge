@@ -4,6 +4,7 @@ import { CodeBlock } from '../components/CodeBlock.js';
 import { ApiTable } from '../components/ApiTable.js';
 import type { ApiRow } from '../components/ApiTable.js';
 import { t } from '../i18n.js';
+import { setToc } from '../toc.js';
 
 // ─── Code strings ──────────────────────────────────────────────────────────────
 
@@ -140,53 +141,62 @@ const RELATION_CODE = `const posts = defineResource({
 
 // ─── API rows ───────────────────────────────────────────────────────────────────
 
-const DEFINE_RESOURCE_API: ApiRow[] = [
-  { name: 'name',     type: 'string',              description: 'Resource identifier. Used as URL segment in admin routes.' },
-  { name: 'label',    type: 'string',  default: 'capitalize(name)', description: 'Human-readable label shown in sidebar and page titles.' },
-  { name: 'endpoint', type: 'string',              description: 'API endpoint path (e.g., /api/posts). Passed to @liteforge/client.' },
-  { name: 'schema',   type: 'z.ZodObject',         description: 'Optional Zod schema for form validation.' },
-  { name: 'actions',  type: "AdminAction[]", default: "['index','show','create','edit','destroy']", description: 'Which CRUD routes to generate.' },
-  { name: 'list',     type: 'ListConfig',           description: 'Column definitions, searchable fields, sort, pagination, and filters.' },
-  { name: 'show',     type: 'ShowConfig?',          description: 'Fields to display in the detail view. Defaults to all list columns.' },
-  { name: 'form',     type: 'FormConfig?',          description: 'Form fields and layout for create/edit views.' },
-  { name: 'hooks',    type: 'ResourceHooks?',       description: 'before/after hooks for create, edit, and destroy operations.' },
-  { name: 'rowActions', type: 'RowAction[]?',       description: 'Custom per-row actions in addition to View/Edit/Delete.' },
-];
+function getDefineResourceApi(): ApiRow[] { return [
+  { name: 'name',     type: 'string',              description: t('admin.apiName') },
+  { name: 'label',    type: 'string',  default: 'capitalize(name)', description: t('admin.apiLabel') },
+  { name: 'endpoint', type: 'string',              description: t('admin.apiEndpoint') },
+  { name: 'schema',   type: 'z.ZodObject',         description: t('admin.apiSchema') },
+  { name: 'actions',  type: "AdminAction[]", default: "['index','show','create','edit','destroy']", description: t('admin.apiActions') },
+  { name: 'list',     type: 'ListConfig',           description: t('admin.apiList') },
+  { name: 'show',     type: 'ShowConfig?',          description: t('admin.apiShow') },
+  { name: 'form',     type: 'FormConfig?',          description: t('admin.apiForm') },
+  { name: 'hooks',    type: 'ResourceHooks?',       description: t('admin.apiHooks') },
+  { name: 'rowActions', type: 'RowAction[]?',       description: t('admin.apiRowActions') },
+]; }
 
-const FIELD_TYPES_API: ApiRow[] = [
-  { name: 'text',     type: 'FieldType', description: '<input type="text"> — default for strings.' },
-  { name: 'textarea', type: 'FieldType', description: '<textarea> — for multi-line text.' },
-  { name: 'number',   type: 'FieldType', description: '<input type="number">.' },
-  { name: 'date',     type: 'FieldType', description: '<input type="date">. Formatted via Intl.DateTimeFormat in list/detail views.' },
-  { name: 'boolean',  type: 'FieldType', description: '<input type="checkbox">. Shown as ✅/❌ in list/detail.' },
-  { name: 'select',   type: 'FieldType', description: '<select> with options array.' },
-  { name: 'badge',    type: 'FieldType', description: 'Renders value as a styled badge span in list/detail.' },
-  { name: 'image',    type: 'FieldType', description: '<input type="url"> for form; rendered as <img> in list/detail.' },
-  { name: 'relation', type: 'FieldType', description: '<select> populated from a related resource (via client).' },
-  { name: 'custom',   type: 'FieldType', description: 'Calls renderCell(value, record) for list or renderForm(getValue, setValue) for forms.' },
-];
+function getFieldTypesApi(): ApiRow[] { return [
+  { name: 'text',     type: 'FieldType', description: t('admin.fieldText') },
+  { name: 'textarea', type: 'FieldType', description: t('admin.fieldTextarea') },
+  { name: 'number',   type: 'FieldType', description: t('admin.fieldNumber') },
+  { name: 'date',     type: 'FieldType', description: t('admin.fieldDate') },
+  { name: 'boolean',  type: 'FieldType', description: t('admin.fieldBoolean') },
+  { name: 'select',   type: 'FieldType', description: t('admin.fieldSelect') },
+  { name: 'badge',    type: 'FieldType', description: t('admin.fieldBadge') },
+  { name: 'image',    type: 'FieldType', description: t('admin.fieldImage') },
+  { name: 'relation', type: 'FieldType', description: t('admin.fieldRelation') },
+  { name: 'custom',   type: 'FieldType', description: t('admin.fieldCustom') },
+]; }
 
-const PLUGIN_API: ApiRow[] = [
-  { name: 'basePath',  type: 'string',  default: "'/admin'", description: 'Base URL prefix for all admin routes.' },
-  { name: 'title',     type: 'string',  default: "'Admin'",  description: 'Title shown in the sidebar header.' },
-  { name: 'logo',      type: 'string | (() => Node)', description: 'Custom logo text or DOM node factory.' },
-  { name: 'unstyled',  type: 'boolean', default: 'false',    description: 'Skip injecting the default CSS. Use your own styles via BEM classes.' },
-];
+function getPluginApi(): ApiRow[] { return [
+  { name: 'basePath',  type: 'string',  default: "'/admin'", description: t('admin.pluginBasePath') },
+  { name: 'title',     type: 'string',  default: "'Admin'",  description: t('admin.pluginTitle') },
+  { name: 'logo',      type: 'string | (() => Node)', description: t('admin.pluginLogo') },
+  { name: 'unstyled',  type: 'boolean', default: 'false',    description: t('admin.pluginUnstyled') },
+]; }
 
-const HOOKS_API: ApiRow[] = [
-  { name: 'beforeCreate',  type: '(data) => data | Promise<data>',          description: 'Transform payload before POST. Return modified data.' },
-  { name: 'afterCreate',   type: '(record: T) => void',                     description: 'Called after successful create with the server response.' },
-  { name: 'beforeEdit',    type: '(data) => data | Promise<data>',          description: 'Transform payload before PUT/PATCH.' },
-  { name: 'afterEdit',     type: '(record: T) => void',                     description: 'Called after successful edit.' },
-  { name: 'beforeDestroy', type: '(id) => boolean | Promise<boolean>',      description: 'Return false to cancel deletion. Useful for confirmation dialogs.' },
-  { name: 'afterDestroy',  type: '(id: string | number) => void',           description: 'Called after successful deletion.' },
-];
+function getHooksApi(): ApiRow[] { return [
+  { name: 'beforeCreate',  type: '(data) => data | Promise<data>',          description: t('admin.hookBeforeCreate') },
+  { name: 'afterCreate',   type: '(record: T) => void',                     description: t('admin.hookAfterCreate') },
+  { name: 'beforeEdit',    type: '(data) => data | Promise<data>',          description: t('admin.hookBeforeEdit') },
+  { name: 'afterEdit',     type: '(record: T) => void',                     description: t('admin.hookAfterEdit') },
+  { name: 'beforeDestroy', type: '(id) => boolean | Promise<boolean>',      description: t('admin.hookBeforeDestroy') },
+  { name: 'afterDestroy',  type: '(id: string | number) => void',           description: t('admin.hookAfterDestroy') },
+]; }
 
 // ─── Page ──────────────────────────────────────────────────────────────────────
 
 export const AdminPage = createComponent({
   name: 'AdminPage',
   component() {
+    setToc([
+      { id: 'define-resource', label: () => t('admin.defineResource'),     level: 2 },
+      { id: 'router',          label: () => t('admin.routerIntegration'),  level: 2 },
+      { id: 'plugin',          label: () => t('admin.pluginSetup'),        level: 2 },
+      { id: 'field-types',     label: () => t('admin.fieldTypes'),         level: 2 },
+      { id: 'hooks',           label: () => t('admin.hooks'),              level: 2 },
+      { id: 'custom',          label: () => t('admin.customCells'),        level: 2 },
+      { id: 'relations',       label: () => t('admin.relations'),          level: 2 },
+    ]);
     return (
       <div>
         <div class="mb-10">
@@ -205,7 +215,7 @@ export const AdminPage = createComponent({
           description={() => t('admin.defineResourceDesc')}
         >
           <CodeBlock code={DEFINE_CODE} language="typescript" />
-          <ApiTable rows={DEFINE_RESOURCE_API} />
+          <ApiTable rows={() => getDefineResourceApi()} />
         </DocSection>
 
         <DocSection
@@ -222,7 +232,7 @@ export const AdminPage = createComponent({
           description={() => t('admin.pluginSetupDesc')}
         >
           <CodeBlock code={PLUGIN_CODE} language="typescript" />
-          <ApiTable rows={PLUGIN_API} />
+          <ApiTable rows={() => getPluginApi()} />
         </DocSection>
 
         <DocSection
@@ -230,7 +240,7 @@ export const AdminPage = createComponent({
           id="field-types"
           description={() => t('admin.fieldTypesDesc')}
         >
-          <ApiTable rows={FIELD_TYPES_API} />
+          <ApiTable rows={() => getFieldTypesApi()} />
         </DocSection>
 
         <DocSection
@@ -239,7 +249,7 @@ export const AdminPage = createComponent({
           description={() => t('admin.hooksDesc')}
         >
           <CodeBlock code={HOOKS_CODE} language="typescript" />
-          <ApiTable rows={HOOKS_API} />
+          <ApiTable rows={() => getHooksApi()} />
         </DocSection>
 
         <DocSection

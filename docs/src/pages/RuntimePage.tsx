@@ -232,10 +232,19 @@ function getComponentApi(): ApiRow[] { return [
 // ─── Page ──────────────────────────────────────────────────────────────────────
 
 import { effect } from 'liteforge';
+import { setToc } from '../toc.js';
 
 export const RuntimePage = createComponent({
   name: 'RuntimePage',
   component() {
+    setToc([
+      { id: 'create-component', label: () => t('runtime.createComponent'), level: 2 },
+      { id: 'jsx',              label: () => t('runtime.jsx'),              level: 2 },
+      { id: 'show',             label: () => t('runtime.show'),             level: 2 },
+      { id: 'for',              label: () => t('runtime.for'),              level: 2 },
+      { id: 'use',              label: () => t('runtime.use'),              level: 2 },
+      { id: 'lifecycle',        label: () => t('runtime.lifecycle'),        level: 2 },
+    ]);
     return (
       <div>
         <div class="mb-10">

@@ -10,6 +10,7 @@ import { Button } from '../components/Button.js';
 import { inputClass } from '../components/Input.js';
 import type { ApiRow } from '../components/ApiTable.js';
 import { t } from '../i18n.js';
+import { setToc } from '../toc.js';
 
 // ─── Live example: Login form (JSX) ──────────────────────────────────────────
 
@@ -212,11 +213,14 @@ const ARRAY_CODE = `const form = createForm({
 const meds = form.array('medications');
 
 meds.append({ name: '', dosage: '' });
+meds.prepend({ name: '', dosage: '' });
 meds.remove(0);
-meds.items()  // ArrayItemField[]
+meds.fields()   // Signal<ArrayItemField[]>
+meds.length()   // number
+meds.error()    // string | undefined
 
 // Each item has .field('name'), .field('dosage')
-meds.items()[0]?.field('name').value()`;
+meds.fields()[0]?.field('name').value()`;
 
 const FORM_STATE_CODE = `form.isSubmitting()   // loading state during onSubmit
 form.isValid()        // no validation errors
@@ -260,11 +264,11 @@ const ARRAY_LIVE_CODE = `const form = createForm({
 
 const items = form.array('items');
 const total = computed(() =>
-  items.items().reduce((sum, item) => sum + Number(item.field('qty').value()) * Number(item.field('price').value()), 0)
+  items.fields().reduce((sum, item) => sum + Number(item.field('qty').value()) * Number(item.field('price').value()), 0)
 );
 
 // Render each row:
-{() => items.items().map((item, i) => (
+{() => items.fields().map((item, i) => (
   <div>
     <input oninput={e => item.field('description').set(e.target.value)} />
     <button onclick={() => items.remove(i)}>×</button>
@@ -275,24 +279,40 @@ Total: {() => total().toFixed(2)}`;
 
 // ─── API rows ─────────────────────────────────────────────────────────────────
 
-const FORM_API: ApiRow[] = [
-  { name: 'schema', type: 'ZodSchema', description: 'Zod schema for validation — defines the shape and rules' },
-  { name: 'initial', type: 'T', description: 'Initial values for all fields' },
-  { name: 'onSubmit', type: '(values: T) => Promise<void>', description: 'Called when form is submitted and validation passes' },
-  { name: 'validateOn', type: "'blur' | 'change' | 'submit'", default: "'submit'", description: 'When to run validation for the first time' },
-  { name: 'revalidateOn', type: "'blur' | 'change'", default: "'change'", description: 'When to re-run validation after first error' },
-];
+function getFormApi(): ApiRow[] { return [
+  { name: 'schema', type: 'ZodSchema', description: t('form.apiSchema') },
+  { name: 'initial', type: 'T', description: t('form.apiInitial') },
+  { name: 'onSubmit', type: '(values: T) => Promise<void>', description: t('form.apiOnSubmit') },
+  { name: 'validateOn', type: "'blur' | 'change' | 'submit'", default: "'submit'", description: t('form.apiValidateOn') },
+  { name: 'revalidateOn', type: "'blur' | 'change'", default: "'change'", description: t('form.apiRevalidateOn') },
+]; }
 
-const ARRAY_API: ApiRow[] = [
-  { name: 'items()', type: 'ArrayItemField[]', description: 'Reactive array of item field instances — re-renders when rows are added/removed' },
-  { name: 'append(value)', type: '(value: T) => void', description: 'Add a new row at the end with the given initial value' },
-  { name: 'remove(index)', type: '(index: number) => void', description: 'Remove the row at the given index' },
-  { name: 'item.field(name)', type: 'FieldInstance', description: 'Access a field on a specific array item — has .value(), .error(), .set(), .blur()' },
-];
+function getArrayApi(): ApiRow[] { return [
+  { name: 'fields()', type: 'ArrayItemField[]', description: t('form.apiFields') },
+  { name: 'append(value)', type: 'void', description: t('form.apiAppend') },
+  { name: 'prepend(value)', type: 'void', description: t('form.apiPrepend') },
+  { name: 'insert(index, value)', type: 'void', description: t('form.apiInsert') },
+  { name: 'remove(index)', type: 'void', description: t('form.apiRemove') },
+  { name: 'move(from, to)', type: 'void', description: t('form.apiMove') },
+  { name: 'swap(indexA, indexB)', type: 'void', description: t('form.apiSwap') },
+  { name: 'replace(values)', type: 'void', description: t('form.apiReplace') },
+  { name: 'length()', type: 'number', description: t('form.apiLength') },
+  { name: 'error()', type: 'string | undefined', description: t('form.apiArrayError') },
+  { name: 'item.field(name)', type: 'FieldInstance', description: t('form.apiItemField') },
+]; }
 
 export const FormPage = createComponent({
   name: 'FormPage',
   component() {
+    setToc([
+      { id: 'create-form', label: () => t('form.createForm'),  level: 2 },
+      { id: 'fields',      label: () => t('form.fields'),      level: 2 },
+      { id: 'validation',  label: () => t('form.validation'),  level: 2 },
+      { id: 'arrays',      label: () => t('form.arrays'),      level: 2 },
+      { id: 'state',       label: () => t('form.state'),       level: 2 },
+      { id: 'live',        label: () => t('form.live'),        level: 2 },
+      { id: 'live-array',  label: () => t('form.liveArray'),   level: 2 },
+    ]);
     return (
       <div>
         <div class="mb-10">
@@ -312,7 +332,7 @@ export const FormPage = createComponent({
         >
           <div>
             <CodeBlock code={SETUP_CODE} language="typescript" />
-            <ApiTable rows={FORM_API} />
+            <ApiTable rows={() => getFormApi()} />
           </div>
         </DocSection>
 
@@ -339,7 +359,7 @@ export const FormPage = createComponent({
         >
           <div>
             <CodeBlock code={ARRAY_CODE} language="typescript" />
-            <ApiTable rows={ARRAY_API} />
+            <ApiTable rows={() => getArrayApi()} />
           </div>
         </DocSection>
 

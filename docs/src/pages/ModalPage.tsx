@@ -8,6 +8,7 @@ import { ApiTable } from '../components/ApiTable.js';
 import { Button } from '../components/Button.js';
 import type { ApiRow } from '../components/ApiTable.js';
 import { t } from '../i18n.js';
+import { setToc } from '../toc.js';
 
 // ─── Live example ─────────────────────────────────────────────────────────────
 
@@ -147,36 +148,42 @@ const value = await prompt('Enter name:', 'Ada');`;
 
 // ─── API rows ─────────────────────────────────────────────────────────────────
 
-const CONFIG_API: ApiRow[] = [
-  { name: 'title', type: 'string', description: 'Modal header title' },
-  { name: 'size', type: "'sm' | 'md' | 'lg' | 'xl' | 'full'", default: "'md'", description: 'Width of the modal dialog' },
-  { name: 'closable', type: 'boolean', default: 'true', description: 'Show × close button in the header' },
-  { name: 'closeOnBackdrop', type: 'boolean', default: 'true', description: 'Close when clicking the backdrop' },
-  { name: 'closeOnEsc', type: 'boolean', default: 'true', description: 'Close when pressing the Escape key' },
-  { name: 'unstyled', type: 'boolean', default: 'false', description: 'Skip default CSS injection — bring your own styles' },
-  { name: 'styles', type: 'ModalStyles', description: 'Per-instance CSS variable overrides (bg, headerBg, headerColor, bodyColor, closeColor, backdrop, shadow, borderRadius)' },
-  { name: 'classes', type: 'ModalClasses', description: 'Per-instance BEM class overrides (overlay, modal, header, title, close, body)' },
-  { name: 'onOpen', type: '() => void', description: 'Called when the modal opens' },
-  { name: 'onClose', type: '() => void', description: 'Called when the modal closes' },
-];
+function getConfigApi(): ApiRow[] { return [
+  { name: 'title', type: 'string', description: t('modal.apiTitle') },
+  { name: 'size', type: "'sm' | 'md' | 'lg' | 'xl' | 'full'", default: "'md'", description: t('modal.apiSize') },
+  { name: 'closable', type: 'boolean', default: 'true', description: t('modal.apiClosable') },
+  { name: 'closeOnBackdrop', type: 'boolean', default: 'true', description: t('modal.apiCloseOnBackdrop') },
+  { name: 'closeOnEsc', type: 'boolean', default: 'true', description: t('modal.apiCloseOnEsc') },
+  { name: 'unstyled', type: 'boolean', default: 'false', description: t('modal.apiUnstyled') },
+  { name: 'styles', type: 'ModalStyles', description: t('modal.apiStyles') },
+  { name: 'classes', type: 'ModalClasses', description: t('modal.apiClasses') },
+  { name: 'onOpen', type: '() => void', description: t('modal.apiOnOpen') },
+  { name: 'onClose', type: '() => void', description: t('modal.apiOnClose') },
+]; }
 
-const INSTANCE_API: ApiRow[] = [
-  { name: 'isOpen', type: 'Signal<boolean>', description: 'Reactive open/closed state' },
-  { name: 'open()', type: 'void', description: 'Show the modal' },
-  { name: 'close()', type: 'void', description: 'Hide the modal' },
-  { name: 'toggle()', type: 'void', description: 'Toggle open/closed' },
-  { name: 'destroy()', type: 'void', description: 'Remove the modal from the DOM entirely' },
-];
+function getInstanceApi(): ApiRow[] { return [
+  { name: 'isOpen', type: 'Signal<boolean>', description: t('modal.apiIsOpen') },
+  { name: 'open()', type: 'void', description: t('modal.apiOpen') },
+  { name: 'close()', type: 'void', description: t('modal.apiClose') },
+  { name: 'toggle()', type: 'void', description: t('modal.apiToggle') },
+  { name: 'destroy()', type: 'void', description: t('modal.apiDestroy') },
+]; }
 
-const PRESET_API: ApiRow[] = [
-  { name: 'confirm(message, config?)', type: 'Promise<boolean>', description: 'Show a confirmation dialog — resolves true (OK) or false (Cancel)' },
-  { name: 'alert(message, config?)', type: 'Promise<void>', description: 'Show an alert dialog — resolves when dismissed' },
-  { name: 'prompt(message, default?, config?)', type: 'Promise<string | null>', description: 'Show an input dialog — resolves with the entered string, or null if cancelled' },
-];
+function getPresetApi(): ApiRow[] { return [
+  { name: 'confirm(message, config?)', type: 'Promise<boolean>', description: t('modal.apiConfirm') },
+  { name: 'alert(message, config?)', type: 'Promise<void>', description: t('modal.apiAlert') },
+  { name: 'prompt(message, default?, config?)', type: 'Promise<string | null>', description: t('modal.apiPrompt') },
+]; }
 
 export const ModalPage = createComponent({
   name: 'ModalPage',
   component() {
+    setToc([
+      { id: 'setup',        label: () => t('modal.setup'),        level: 2 },
+      { id: 'create-modal', label: () => t('modal.createModal'),  level: 2 },
+      { id: 'presets',      label: () => t('modal.presets'),      level: 2 },
+      { id: 'live',         label: () => t('modal.live'),         level: 2 },
+    ]);
     return (
       <div>
         <div class="mb-10">
@@ -207,8 +214,8 @@ export const ModalPage = createComponent({
         >
           <div>
             <CodeBlock code={BASIC_CODE} language="tsx" />
-            <ApiTable rows={CONFIG_API} />
-            <ApiTable rows={INSTANCE_API} />
+            <ApiTable rows={() => getConfigApi()} />
+            <ApiTable rows={() => getInstanceApi()} />
           </div>
         </DocSection>
 
@@ -219,7 +226,7 @@ export const ModalPage = createComponent({
         >
           <div>
             <CodeBlock code={PRESETS_CODE} language="typescript" />
-            <ApiTable rows={PRESET_API} />
+            <ApiTable rows={() => getPresetApi()} />
           </div>
         </DocSection>
 

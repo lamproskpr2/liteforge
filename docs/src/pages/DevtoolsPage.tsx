@@ -4,27 +4,23 @@ import { CodeBlock } from '../components/CodeBlock.js';
 import { ApiTable } from '../components/ApiTable.js';
 import type { ApiRow } from '../components/ApiTable.js';
 import { t } from '../i18n.js';
+import { setToc } from '../toc.js';
 
 // ─── Code strings ─────────────────────────────────────────────────────────────
 
 const INTEGRATION_CODE = `// main.tsx
 import { createApp } from 'liteforge';
-import { devtoolsPlugin } from 'liteforge/devtools';
 
-await createApp({
-  root: App,
-  target: '#app',
-  router,
-  plugins: [
-    devtoolsPlugin({
-      shortcut:    'ctrl+shift+d',   // toggle panel
-      position:    'right',          // 'right' | 'bottom' | 'floating'
-      defaultTab:  'signals',
-      width:       360,
-      maxEvents:   1000,
-    }),
-  ],
-});`;
+await createApp({ root: App, target: '#app' })
+  // useDev() is tree-shaken from production builds automatically
+  .useDev(() => import('liteforge/devtools').then(m => m.devtoolsPlugin({
+    shortcut:   'ctrl+shift+d',   // toggle panel
+    position:   'right',          // 'right' | 'bottom' | 'floating'
+    defaultTab: 'signals',
+    width:      360,
+    maxEvents:  1000,
+  })))
+  .mount();`;
 
 const INSTALL_CODE = `pnpm add -D @liteforge/devtools`;
 const IMPORT_CODE = `import { devtoolsPlugin } from 'liteforge/devtools';`;
@@ -56,26 +52,33 @@ dt.close();`;
 
 // ─── API rows ─────────────────────────────────────────────────────────────────
 
-const CONFIG_API: ApiRow[] = [
-  { name: 'shortcut', type: 'string', default: "'ctrl+shift+d'", description: 'Keyboard shortcut to toggle the panel open/closed' },
-  { name: 'position', type: "'right' | 'bottom' | 'floating'", default: "'right'", description: 'Where the panel docks — right side, bottom, or floating' },
-  { name: 'defaultTab', type: "'signals' | 'stores' | 'router' | 'components' | 'performance'", default: "'signals'", description: 'Which tab is active when the panel opens' },
-  { name: 'width', type: 'number', default: '360', description: 'Panel width in px — applies when position is right' },
-  { name: 'height', type: 'number', default: '300', description: 'Panel height in px — applies when position is bottom' },
-  { name: 'maxEvents', type: 'number', default: '1000', description: 'Maximum number of events kept in the circular buffer' },
-];
+function getConfigApi(): ApiRow[] { return [
+  { name: 'shortcut', type: 'string', default: "'ctrl+shift+d'", description: t('devtools.apiShortcut') },
+  { name: 'position', type: "'right' | 'bottom' | 'floating'", default: "'right'", description: t('devtools.apiPosition') },
+  { name: 'defaultTab', type: "'signals' | 'stores' | 'router' | 'components' | 'performance'", default: "'signals'", description: t('devtools.apiDefaultTab') },
+  { name: 'width', type: 'number', default: '360', description: t('devtools.apiWidth') },
+  { name: 'height', type: 'number', default: '300', description: t('devtools.apiHeight') },
+  { name: 'maxEvents', type: 'number', default: '1000', description: t('devtools.apiMaxEvents') },
+]; }
 
-const TABS_INFO: ApiRow[] = [
-  { name: 'Signals', type: 'tab', description: 'Live list of all active signals — ID, current value, read/write counts, and last update timestamp' },
-  { name: 'Stores', type: 'tab', description: 'Per-store state inspector with time-travel history — click any past action to restore state' },
-  { name: 'Router', type: 'tab', description: 'Current route, matched params, navigation history, and guard evaluation log' },
-  { name: 'Components', type: 'tab', description: 'Registered component tree — shows which components are mounted, their HMR IDs, and re-render counts' },
-  { name: 'Performance', type: 'tab', description: 'Effect/computed evaluation timeline, slow-render warnings, and signal fan-out graph' },
-];
+function getTabsInfo(): ApiRow[] { return [
+  { name: 'Signals', type: 'tab', description: t('devtools.tabSignals') },
+  { name: 'Stores', type: 'tab', description: t('devtools.tabStores') },
+  { name: 'Router', type: 'tab', description: t('devtools.tabRouter') },
+  { name: 'Components', type: 'tab', description: t('devtools.tabComponents') },
+  { name: 'Performance', type: 'tab', description: t('devtools.tabPerformance') },
+]; }
 
 export const DevtoolsPage = createComponent({
   name: 'DevtoolsPage',
   component() {
+    setToc([
+      { id: 'integration', label: () => t('devtools.integration'),  level: 2 },
+      { id: 'config',      label: () => t('devtools.config'),       level: 2 },
+      { id: 'tabs',        label: () => t('devtools.tabs'),         level: 2 },
+      { id: 'time-travel', label: () => t('devtools.timeTravel'),   level: 2 },
+      { id: 'standalone',  label: () => t('devtools.standalone'),   level: 2 },
+    ]);
     return (
       <div>
         <div class="mb-10">
@@ -101,7 +104,7 @@ export const DevtoolsPage = createComponent({
           id="config"
           description={() => t('devtools.configDesc')}
         >
-          <ApiTable rows={CONFIG_API} />
+          <ApiTable rows={() => getConfigApi()} />
         </DocSection>
 
         <DocSection
@@ -134,7 +137,7 @@ export const DevtoolsPage = createComponent({
                 </div>
               </div>
             </div>
-            <ApiTable rows={TABS_INFO} />
+            <ApiTable rows={() => getTabsInfo()} />
           </div>
         </DocSection>
 

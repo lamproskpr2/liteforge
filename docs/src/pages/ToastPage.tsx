@@ -6,6 +6,7 @@ import { LiveExample } from '../components/LiveExample.js';
 import { ApiTable } from '../components/ApiTable.js';
 import type { ApiRow } from '../components/ApiTable.js';
 import { t } from '../i18n.js';
+import { setToc } from '../toc.js';
 
 // ─── Live example ──────────────────────────────────────────────────────────────
 
@@ -27,7 +28,6 @@ function ToastExample(): Node {
 
   const note = document.createElement('p');
   note.className = 'text-xs text-[var(--content-muted)]';
-  note.textContent = 'Toast provider must be mounted via toastPlugin() in main.tsx to see toasts.';
 
   const lastResult = signal('');
   const status = document.createElement('div');
@@ -123,33 +123,43 @@ const CSS_CODE = `:root {
 
 // ─── API rows ──────────────────────────────────────────────────────────────────
 
-const PLUGIN_API: ApiRow[] = [
-  { name: 'position', type: 'ToastPosition', default: "'bottom-right'", description: 'Where toasts appear on screen' },
-  { name: 'maxToasts', type: 'number', default: '5', description: 'Maximum number of visible toasts' },
-  { name: 'duration', type: 'number', default: '4000', description: 'Default auto-dismiss delay in ms' },
-  { name: 'unstyled', type: 'boolean', default: 'false', description: 'Skip default CSS injection' },
-];
+function getPluginApi(): ApiRow[] { return [
+  { name: 'position', type: 'ToastPosition', default: "'bottom-right'", description: t('toast.apiPosition') },
+  { name: 'maxToasts', type: 'number', default: '5', description: t('toast.apiMaxToasts') },
+  { name: 'duration', type: 'number', default: '4000', description: t('toast.apiDuration') },
+  { name: 'unstyled', type: 'boolean', default: 'false', description: t('toast.apiUnstyled') },
+]; }
 
-const TOAST_API: ApiRow[] = [
-  { name: 'toast.success(message, opts?)', type: 'string', description: 'Show a green success toast — returns toast ID' },
-  { name: 'toast.error(message, opts?)', type: 'string', description: 'Show a red error toast' },
-  { name: 'toast.warning(message, opts?)', type: 'string', description: 'Show an amber warning toast' },
-  { name: 'toast.info(message, opts?)', type: 'string', description: 'Show a blue info toast' },
-  { name: 'toast.promise(p, labels)', type: 'Promise<T>', description: 'Track a promise — loading → success/error transition' },
-  { name: 'toast.dismiss(id?)', type: 'void', description: 'Dismiss one (by ID) or all toasts' },
-];
+function getToastApi(): ApiRow[] { return [
+  { name: 'toast.success(message, opts?)', type: 'string', description: t('toast.apiSuccess') },
+  { name: 'toast.error(message, opts?)', type: 'string', description: t('toast.apiError') },
+  { name: 'toast.warning(message, opts?)', type: 'string', description: t('toast.apiWarning') },
+  { name: 'toast.info(message, opts?)', type: 'string', description: t('toast.apiInfo') },
+  { name: 'toast.promise(p, labels)', type: 'Promise<T>', description: t('toast.apiPromise') },
+  { name: 'toast.dismiss(id?)', type: 'void', description: t('toast.apiDismiss') },
+]; }
 
-const OPTS_API: ApiRow[] = [
-  { name: 'duration', type: 'number', description: 'Override auto-dismiss delay for this toast (ms)' },
-  { name: 'closable', type: 'boolean', description: 'Show a × button on this toast' },
-  { name: 'id', type: 'string', description: 'Stable ID — prevents duplicates if you pass the same id twice' },
-];
+function getOptsApi(): ApiRow[] { return [
+  { name: 'duration', type: 'number', description: t('toast.apiOptDuration') },
+  { name: 'closable', type: 'boolean', description: t('toast.apiClosable') },
+  { name: 'id', type: 'string', description: t('toast.apiId') },
+]; }
 
 // ─── Page ──────────────────────────────────────────────────────────────────────
 
 export const ToastPage = createComponent({
   name: 'ToastPage',
   component() {
+    setToc([
+      { id: 'setup',      label: () => t('toast.setup'),          level: 2 },
+      { id: 'basic',      label: () => t('toast.basic'),          level: 2 },
+      { id: 'promise',    label: () => t('toast.promise'),        level: 2 },
+      { id: 'position',   label: () => t('toast.position'),       level: 2 },
+      { id: 'css',        label: () => t('toast.cssVars'),        level: 2 },
+      { id: 'plugin-api', label: () => t('toast.pluginOptions'),  level: 2 },
+      { id: 'api',        label: () => t('toast.api'),            level: 2 },
+      { id: 'opts-api',   label: () => t('toast.toastOptions'),   level: 3 },
+    ]);
     return (
       <div>
         <div class="mb-10">
@@ -191,15 +201,15 @@ toast.info('New version available.');`}
         </DocSection>
 
         <DocSection title={() => t('toast.pluginOptions')} id="plugin-api">
-          <ApiTable rows={PLUGIN_API} />
+          <ApiTable rows={() => getPluginApi()} />
         </DocSection>
 
         <DocSection title={() => t('toast.api')} id="api">
-          <ApiTable rows={TOAST_API} />
+          <ApiTable rows={() => getToastApi()} />
         </DocSection>
 
         <DocSection title={() => t('toast.toastOptions')} id="opts-api">
-          <ApiTable rows={OPTS_API} />
+          <ApiTable rows={() => getOptsApi()} />
         </DocSection>
       </div>
     );

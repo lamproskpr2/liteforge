@@ -8,6 +8,7 @@ import { ApiTable } from '../components/ApiTable.js';
 import { btnClass } from '../components/Button.js';
 import type { ApiRow } from '../components/ApiTable.js';
 import { t } from '../i18n.js';
+import { setToc } from '../toc.js';
 
 // ─── Translations ──────────────────────────────────────────────────────────────
 
@@ -240,6 +241,15 @@ function getApiApi(): ApiRow[] { return [
 export const I18nPage = createComponent({
   name: 'I18nPage',
   component() {
+    setToc([
+      { id: 'setup',                label: () => t('i18n.setup'),          level: 2 },
+      { id: 'usage',                label: () => t('i18n.usage'),          level: 2 },
+      { id: 'locale-files',         label: () => t('i18n.localeFiles'),    level: 2 },
+      { id: 'interpolation',        label: () => t('i18n.interpolation'),  level: 2 },
+      { id: 'pluralization-detail', label: () => t('i18n.pluralization'),  level: 2 },
+      { id: 'fallback-detail',      label: () => t('i18n.fallback'),       level: 2 },
+      { id: 'live',                 label: () => t('i18n.live'),           level: 2 },
+    ]);
     return (
       <div>
         <div class="mb-10">

@@ -48,6 +48,11 @@ export const ApiTable = createComponent<ApiTableProps>({
         },
       ],
       unstyled: true,
+      styles: {
+        rowBg:       'var(--surface-base)',
+        rowBgStriped: 'var(--surface-raised)',
+        rowBgHover:  'var(--surface-overlay)',
+      },
       classes: {
         root:       'overflow-x-auto border border-[var(--line-default)] my-4 [border-radius:var(--lf-radius,8px)]',
         table:      'w-full text-sm text-left',

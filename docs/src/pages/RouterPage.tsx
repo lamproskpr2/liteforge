@@ -7,6 +7,7 @@ import { LiveExample } from '../components/LiveExample.js';
 import { btnClass } from '../components/Button.js';
 import type { ApiRow } from '../components/ApiTable.js';
 import { t } from '../i18n.js';
+import { setToc } from '../toc.js';
 
 // ─── Live example ──────────────────────────────────────────────────────────────
 
@@ -370,20 +371,31 @@ const RouterDemo = ${_cc}({
 
 // ─── API rows ──────────────────────────────────────────────────────────────────
 
-const ROUTE_API: ApiRow[] = [
-  { name: 'path', type: 'string', description: 'Route path. Use :param for dynamic segments, * for wildcard' },
-  { name: 'component', type: 'ComponentFactory | () => Promise', description: 'Component factory or lazy import function' },
-  { name: 'export', type: 'string', description: 'Named export to use from a lazy-loaded module' },
-  { name: 'guard', type: 'RouteGuard | RouteGuard[]', description: 'Guard(s) that must pass before navigation completes' },
-  { name: 'children', type: 'RouteDefinition[]', description: 'Nested routes rendered inside parent\'s RouterOutlet' },
-  { name: 'meta', type: 'Record<string, unknown>', description: 'Arbitrary metadata accessible in middleware and guards' },
-  { name: 'loading', type: '() => Node', description: 'Component shown while lazy module is loading' },
-  { name: 'lazy', type: '{ delay?, timeout? }', description: 'Override global lazy loading config for this route' },
-];
+function getRouteApi(): ApiRow[] { return [
+  { name: 'path', type: 'string', description: t('router.apiPath') },
+  { name: 'component', type: 'ComponentFactory | () => Promise', description: t('router.apiComponent') },
+  { name: 'export', type: 'string', description: t('router.apiExport') },
+  { name: 'guard', type: 'RouteGuard | RouteGuard[]', description: t('router.apiGuard') },
+  { name: 'children', type: 'RouteDefinition[]', description: t('router.apiChildren') },
+  { name: 'meta', type: 'Record<string, unknown>', description: t('router.apiMeta') },
+  { name: 'loading', type: '() => Node', description: t('router.apiLoading') },
+  { name: 'lazy', type: '{ delay?, timeout? }', description: t('router.apiLazy') },
+]; }
 
 export const RouterPage = createComponent({
   name: 'RouterPage',
   component() {
+    setToc([
+      { id: 'setup',            label: () => t('router.setup'),            level: 2 },
+      { id: 'nested',           label: () => t('router.nested'),           level: 2 },
+      { id: 'lazy',             label: () => t('router.lazy'),             level: 2 },
+      { id: 'link',             label: () => t('router.link'),             level: 2 },
+      { id: 'params',           label: () => t('router.useRouter'),        level: 2 },
+      { id: 'guards',           label: () => t('router.guards'),           level: 2 },
+      { id: 'middleware',       label: () => t('router.middleware'),       level: 2 },
+      { id: 'typed-routes',     label: () => t('router.typedRoutes'),      level: 2 },
+      { id: 'view-transitions', label: () => t('router.viewTransitions'),  level: 2 },
+    ]);
     return (
       <div>
         <div class="mb-10">
@@ -403,7 +415,7 @@ export const RouterPage = createComponent({
         >
           <div>
             <CodeBlock code={SETUP_CODE} language="typescript" />
-            <ApiTable rows={ROUTE_API} />
+            <ApiTable rows={() => getRouteApi()} />
           </div>
         </DocSection>
 

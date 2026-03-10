@@ -8,6 +8,7 @@ import { LiveExample } from '../components/LiveExample.js';
 import { ApiTable } from '../components/ApiTable.js';
 import type { ApiRow } from '../components/ApiTable.js';
 import { t } from '../i18n.js';
+import { setToc } from '../toc.js';
 
 // =============================================================================
 // Live Examples
@@ -394,28 +395,28 @@ Switch({
 // API rows
 // =============================================================================
 
-const SHOW_API: ApiRow[] = [
-  { name: 'when', type: '() => T | T', description: 'Condition — when truthy, children is called with the value (narrowed to NonNullable<T>)' },
-  { name: 'children', type: '(value: NonNullable<T>) => Node', description: 'Render function called with the truthy value' },
-  { name: 'fallback', type: '() => Node', default: 'nothing', description: 'Rendered when when is falsy' },
-];
+function getShowApi(): ApiRow[] { return [
+  { name: 'when', type: '() => T | T', description: t('controlflow.apiShowWhen') },
+  { name: 'children', type: '(value: NonNullable<T>) => Node', description: t('controlflow.apiShowChildren') },
+  { name: 'fallback', type: '() => Node', default: 'nothing', description: t('controlflow.apiShowFallback') },
+]; }
 
-const FOR_API: ApiRow[] = [
-  { name: 'each', type: 'Signal<T[]> | T[]', description: 'Array source — pass the signal directly or a plain array' },
-  { name: 'key', type: 'keyof T | (item: T, index: number) => string | number', default: 'index', description: 'Key for reconciliation — string property name (e.g. \'id\') or key extractor function' },
-  { name: 'children', type: '(item: T, index: number) => Node', description: 'Render function called for each item' },
-  { name: 'fallback', type: '() => Node', default: 'nothing', description: 'Rendered when the array is empty' },
-];
+function getForApi(): ApiRow[] { return [
+  { name: 'each', type: 'Signal<T[]> | T[]', description: t('controlflow.apiForEach') },
+  { name: 'key', type: 'keyof T | (item: T, index: number) => string | number', default: 'index', description: t('controlflow.apiForKey') },
+  { name: 'children', type: '(item: T, index: number) => Node', description: t('controlflow.apiForChildren') },
+  { name: 'fallback', type: '() => Node', default: 'nothing', description: t('controlflow.apiForFallback') },
+]; }
 
-const SWITCH_API: ApiRow[] = [
-  { name: 'children', type: 'MatchCase[]', description: 'Array of Match case objects — first truthy match wins' },
-  { name: 'fallback', type: '() => Node', default: 'nothing', description: 'Rendered when no Match condition is true' },
-];
+function getSwitchApi(): ApiRow[] { return [
+  { name: 'children', type: 'MatchCase[]', description: t('controlflow.apiSwitchChildren') },
+  { name: 'fallback', type: '() => Node', default: 'nothing', description: t('controlflow.apiSwitchFallback') },
+]; }
 
-const MATCH_API: ApiRow[] = [
-  { name: 'when', type: '() => boolean | boolean', description: 'Condition — first true match in a Switch wins' },
-  { name: 'children', type: '() => Node', description: 'Render function for this case' },
-];
+function getMatchApi(): ApiRow[] { return [
+  { name: 'when', type: '() => boolean | boolean', description: t('controlflow.apiMatchWhen') },
+  { name: 'children', type: '() => Node', description: t('controlflow.apiMatchChildren') },
+]; }
 
 // =============================================================================
 // Decision guide data
@@ -442,6 +443,9 @@ const DECISION_ROWS: DecisionRow[] = [
 export const ControlFlowPage = createComponent({
   name: 'ControlFlowPage',
   component() {
+    setToc([
+      { id: 'decision-guide', label: () => t('controlflow.whenToUse'), level: 2 },
+    ]);
     const decisionTable = createTable<DecisionRow>({
       data: () => DECISION_ROWS,
       columns: [
@@ -511,7 +515,7 @@ export const ControlFlowPage = createComponent({
           <div>
             <CodeBlock code={SHOW_BASIC_CODE} language="tsx" />
             <CodeBlock code={SHOW_JSX_CODE} language="tsx" title="JSX tag syntax" />
-            <ApiTable rows={SHOW_API} />
+            <ApiTable rows={() => getShowApi()} />
             <CodeBlock code={SHOW_REALISTIC_CODE} language="tsx" title="With @liteforge/query" />
             <LiveExample
               title={() => t('controlflow.liveShowTitle')}
@@ -531,9 +535,9 @@ export const ControlFlowPage = createComponent({
             <CodeBlock code={SWITCH_CODE} language="tsx" />
             <CodeBlock code={SWITCH_JSX_CODE} language="tsx" title="JSX tag syntax" />
             <p class="text-xs font-semibold text-[var(--content-secondary)] mb-1 mt-4">Switch</p>
-            <ApiTable rows={SWITCH_API} />
+            <ApiTable rows={() => getSwitchApi()} />
             <p class="text-xs font-semibold text-[var(--content-secondary)] mb-1 mt-4">Match</p>
-            <ApiTable rows={MATCH_API} />
+            <ApiTable rows={() => getMatchApi()} />
             <LiveExample
               title={() => t('controlflow.liveSwitchTitle')}
               component={SwitchLiveExample}
@@ -551,7 +555,7 @@ export const ControlFlowPage = createComponent({
           <div>
             <CodeBlock code={FOR_BASIC_CODE} language="tsx" />
             <CodeBlock code={FOR_JSX_CODE} language="tsx" title="JSX tag syntax" />
-            <ApiTable rows={FOR_API} />
+            <ApiTable rows={() => getForApi()} />
             <CodeBlock code={FOR_WHY_NOT_MAP_CODE} language="tsx" title="Why not .map()?" />
             <LiveExample
               title={() => t('controlflow.liveForTitle')}
