@@ -8,6 +8,7 @@
 import { effect } from '@liteforge/core';
 import type { ComponentInstance, ComponentFactory, ComponentFactoryInternal, RenderFunction } from './types.js';
 import { isComponentFactory } from './component.js';
+import { getContextSnapshot, withContext } from './context.js';
 
 // ============================================================================
 // Type Discrimination Helper
@@ -287,6 +288,12 @@ export function For<T>(config: ForConfig<T>): Node {
   // We cast here because the compiled children are compatible with the getter signature.
   const children = config.children as unknown as ForConfigInternal<T>['children'];
 
+  // Capture the current context snapshot synchronously (during component render).
+  // reconcile() and createMappedItem() run asynchronously (MutationObserver / effect),
+  // at which point the context stack has already been popped. We restore it when
+  // calling children() so that use('router') and other context lookups work correctly.
+  const capturedContext = getContextSnapshot();
+
   // Create markers for positioning
   const startMarker = document.createComment('For:start');
   const endMarker = document.createComment('For:end');
@@ -352,12 +359,13 @@ export function For<T>(config: ForConfig<T>): Node {
       cleanupFns.length = 0;
     };
     
-    // Render the children with getters
-    // The children function is called ONCE per unique key
-    const node = children(
+    // Render the children with getters, restoring the captured context so that
+    // use('router') and other context lookups work inside children callbacks
+    // even though createMappedItem runs asynchronously (MutationObserver / effect).
+    const node = withContext(capturedContext, () => children(
       () => itemSignal(),
       () => indexSignal()
-    );
+    ));
     
     return {
       key: itemKey,
