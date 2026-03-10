@@ -18,6 +18,7 @@ import type {
 import { executeFetch } from './request.js';
 import { createInterceptorRegistry } from './interceptors.js';
 import { createMiddlewarePipeline } from './middleware.js';
+import { ApiError } from './errors.js';
 import { createResource } from './resource.js';
 import { buildUrl } from './utils/url.js';
 import { mergeHeaders } from './utils/headers.js';
@@ -79,8 +80,6 @@ export function createClient(opts: InternalOpts): Client | QueryClient {
         retryDelay,
       );
     } catch (err: unknown) {
-      // Import at runtime to avoid circular-dep issues in type-checking
-      const { ApiError } = await import('./errors.js');
       if (err instanceof ApiError) {
         return interceptorRegistry.runResponseError(err) as Promise<never>;
       }

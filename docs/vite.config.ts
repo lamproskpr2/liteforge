@@ -15,6 +15,30 @@ export default defineConfig({
   build: {
     target: 'es2022',
     outDir: 'dist',
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          // Reactive foundation — loaded on every page, tiny and stable
+          'lf-core':     ['@liteforge/core'],
+          // Component runtime + JSX helpers — shared by all pages
+          'lf-runtime':  ['@liteforge/runtime'],
+          // Router — needed on every page (Layout uses RouterOutlet)
+          'lf-router':   ['@liteforge/router'],
+          // Store — used by Layout (themeStore) and a few pages
+          'lf-store':    ['@liteforge/store'],
+          // UI plugins that are globally registered in main.tsx
+          'lf-ui-core':  ['@liteforge/modal', '@liteforge/toast', '@liteforge/tooltip'],
+          // i18n — globally registered, but translations are already split
+          'lf-i18n':     ['@liteforge/i18n'],
+          // Heavy packages that belong to a single lazy page
+          'lf-calendar': ['@liteforge/calendar'],
+          'lf-form':     ['@liteforge/form'],
+          'lf-table':    ['@liteforge/table'],
+          'lf-client':   ['@liteforge/client'],
+          'lf-query':    ['@liteforge/query'],
+        },
+      },
+    },
   },
   resolve: {
     alias: {
