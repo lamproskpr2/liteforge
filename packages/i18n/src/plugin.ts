@@ -66,7 +66,11 @@ export function i18nPlugin(options: I18nPluginOptions): LiteForgePlugin {
       // Derive load function from glob or explicit loader — explicit wins
       const loadFn = load ?? (async (locale: Locale): Promise<TranslationTree> => {
         if (!locales) throw new Error('[i18n] Provide either locales or load in i18nPlugin options');
-        const entry = Object.entries(locales).find(([key]) => key.endsWith(`/${locale}.js`));
+        // Match by basename without extension — works for both .js and .ts glob keys
+        const entry = Object.entries(locales).find(([key]) => {
+          const base = key.split('/').pop()?.replace(/\.[^.]+$/, '');
+          return base === locale;
+        });
         if (!entry) throw new Error(`[i18n] No locale file found for "${locale}"`);
         const mod = await entry[1]() as { default: TranslationTree };
         return mod.default;

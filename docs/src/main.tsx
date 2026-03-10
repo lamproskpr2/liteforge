@@ -14,7 +14,7 @@ initTheme();
 // Vite-native locale discovery — cast avoids importing vite/client types which
 // conflict with the runtime package's own ImportMeta.env declaration.
 type GlobFn = (pattern: string, opts?: { eager?: boolean }) => Record<string, () => Promise<unknown>>;
-const locales = ((import.meta as unknown as { glob: GlobFn }).glob)('./locales/*.js');
+const locales = ((import.meta as unknown as { glob: GlobFn }).glob)('./locales/*.ts');
 
 const history = createBrowserHistory();
 const router = createRouter({
