@@ -201,7 +201,7 @@ function createElement(
 
   // Apply props
   if (props !== null) {
-    applyProps(element as HTMLElement, props);
+    applyProps(element as HTMLElement, props, SVG_TAGS.has(tag));
   }
 
   // Append children
@@ -213,7 +213,7 @@ function createElement(
 /**
  * Apply props to an element, setting up effects for reactive props
  */
-function applyProps(element: HTMLElement, props: Props): void {
+function applyProps(element: HTMLElement, props: Props, isSvg = false): void {
   if (props === null) return;
 
   for (const [key, value] of Object.entries(props)) {
@@ -242,20 +242,32 @@ function applyProps(element: HTMLElement, props: Props): void {
       const getter = value as () => unknown;
       effect(() => {
         const resolved = getter();
-        setProp(element, key, resolved);
+        setProp(element, key, resolved, isSvg);
       });
       continue;
     }
 
     // Static prop
-    setProp(element, key, value);
+    setProp(element, key, value, isSvg);
   }
 }
 
 /**
  * Set a single prop on an element
  */
-function setProp(element: HTMLElement, key: string, value: unknown): void {
+function setProp(element: HTMLElement, key: string, value: unknown, isSvg = false): void {
+  // SVG elements: always use setAttribute — direct property assignment
+  // doesn't work for SVG-specific props (d, points, viewBox, etc. are SVGAnimatedString)
+  if (isSvg) {
+    if (value === null || value === undefined) {
+      element.removeAttribute(key);
+    } else if (key === 'style') {
+      element.setAttribute('style', typeof value === 'string' ? value : '');
+    } else if (key !== 'ref') {
+      element.setAttribute(key, String(value));
+    }
+    return;
+  }
   // Handle null/undefined - remove attribute
   if (value === null || value === undefined) {
     element.removeAttribute(key);
