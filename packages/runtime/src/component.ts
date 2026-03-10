@@ -123,8 +123,8 @@ export function createComponent<
   D,
   S,
 >(definition: ComponentDefinition<P, D, S>): ComponentFactory<P, Partial<P>> {
-  const factory = (inputProps: Partial<P>): ComponentInstance => {
-    return createComponentInstance(definition, inputProps as P);
+  const factory = (inputProps?: Partial<P>): ComponentInstance => {
+    return createComponentInstance(definition, (inputProps ?? {}) as P);
   };
 
   // Mark as LiteForge component for detection.

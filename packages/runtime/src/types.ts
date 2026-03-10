@@ -341,8 +341,11 @@ export interface ComponentFactory<
    * Calling a ComponentFactory as a JSX tag produces a Node (JSX.Element = Node).
    * Internally the runtime calls this, detects __liteforge_component, and mounts
    * the ComponentInstance via h() → createComponentNode().
+   *
+   * Props are optional so that components with no defined props can be called
+   * as `MyComponent()` without passing an empty object.
    */
-  (props: InputP): Node;
+  (props?: InputP): Node;
   /** Internal marker for component detection */
   __liteforge_component: true;
   /** HMR identifier (injected by vite-plugin in dev mode) */
